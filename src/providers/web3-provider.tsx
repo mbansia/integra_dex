@@ -1,7 +1,6 @@
 "use client";
 
 import { Web3Auth } from "@web3auth/modal";
-import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import {
   createContext,
@@ -20,17 +19,6 @@ import {
   type PublicClient,
 } from "viem";
 import { integraTestnet } from "@/lib/chains";
-
-const INTEGRA_CHAIN = {
-  chainNamespace: CHAIN_NAMESPACES.EIP155,
-  chainId: "0x666A",
-  rpcTarget: "https://testnet-rpc.integralayer.com",
-  displayName: "Integra Testnet",
-  blockExplorerUrl: "https://explorer.integralayer.com",
-  ticker: "IRL",
-  tickerName: "Integra Real Life",
-  logo: "https://integralayer.com/logo.png",
-};
 
 interface Web3ContextType {
   web3auth: Web3Auth | null;
@@ -75,14 +63,22 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const privateKeyProvider = new EthereumPrivateKeyProvider({
-          config: { chainConfig: INTEGRA_CHAIN },
-        });
-
         const w3a = new Web3Auth({
           clientId,
           web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
-          privateKeyProvider,
+          chains: [
+            {
+              chainNamespace: CHAIN_NAMESPACES.EIP155,
+              chainId: "0x666A",
+              rpcTarget: "https://testnet-rpc.integralayer.com",
+              displayName: "Integra Testnet",
+              blockExplorerUrl: "https://explorer.integralayer.com",
+              ticker: "IRL",
+              tickerName: "Integra Real Life",
+              logo: "https://integralayer.com/logo.png",
+            },
+          ],
+          defaultChainId: "0x666A",
           uiConfig: {
             appName: "PlotSwap",
             theme: { primary: "#6366F1" },
@@ -92,7 +88,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           },
         });
 
-        await w3a.initModal();
+        await w3a.init();
         setWeb3Auth(w3a);
 
         if (w3a.connected && w3a.provider) {

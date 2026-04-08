@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { DEFAULT_TOKEN_LIST, type TokenInfo } from "@/lib/token-list";
+import { useTokenList } from "@/hooks/useTokenList";
+import type { TokenInfo } from "@/lib/token-list";
 
 interface TokenSelectorProps {
   isOpen: boolean;
@@ -17,10 +18,11 @@ export function TokenSelector({
   excludeAddress,
 }: TokenSelectorProps) {
   const [search, setSearch] = useState("");
+  const { tokens, isLoading } = useTokenList();
 
   if (!isOpen) return null;
 
-  const filtered = DEFAULT_TOKEN_LIST.filter((t) => {
+  const filtered = tokens.filter((t) => {
     if (t.address === excludeAddress) return false;
     const q = search.toLowerCase();
     return (
@@ -54,35 +56,45 @@ export function TokenSelector({
         />
 
         <div className="space-y-1 max-h-80 overflow-y-auto">
-          {filtered.map((token) => (
-            <button
-              key={token.address}
-              onClick={() => {
-                onSelect(token);
-                onClose();
-                setSearch("");
-              }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-plotswap-primary/10 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-xs font-bold text-plotswap-primary-light">
-                {token.symbol.slice(0, 2)}
-              </div>
-              <div className="text-left flex-1">
-                <div className="font-medium text-sm">{token.symbol}</div>
-                <div className="text-xs text-plotswap-text-muted">
-                  {token.name}
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="w-6 h-6 border-2 border-plotswap-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-sm text-plotswap-text-muted">
+                Discovering tokens...
+              </p>
+            </div>
+          ) : filtered.length > 0 ? (
+            filtered.map((token) => (
+              <button
+                key={token.address}
+                onClick={() => {
+                  onSelect(token);
+                  onClose();
+                  setSearch("");
+                }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-plotswap-primary/10 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-xs font-bold text-plotswap-primary-light">
+                  {token.symbol.slice(0, 2)}
                 </div>
-              </div>
-              {token.isERC1404 && (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-plotswap-warning/15 text-plotswap-warning border border-plotswap-warning/20">
-                  1404
-                </span>
-              )}
-            </button>
-          ))}
-          {filtered.length === 0 && (
+                <div className="text-left flex-1">
+                  <div className="font-medium text-sm">{token.symbol}</div>
+                  <div className="text-xs text-plotswap-text-muted">
+                    {token.name}
+                  </div>
+                </div>
+                {token.isERC1404 && (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-plotswap-warning/15 text-plotswap-warning border border-plotswap-warning/20">
+                    1404
+                  </span>
+                )}
+              </button>
+            ))
+          ) : (
             <p className="text-center text-plotswap-text-muted py-8 text-sm">
-              No tokens found
+              {tokens.length === 0
+                ? "No tokens found on-chain. Deploy contracts and create pairs first."
+                : "No tokens match your search"}
             </p>
           )}
         </div>
