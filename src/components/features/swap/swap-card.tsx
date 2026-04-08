@@ -5,6 +5,7 @@ import { useWeb3 } from "@/providers/web3-provider";
 import { useSwap } from "@/hooks/useSwap";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useTokenApproval } from "@/hooks/useTokenApproval";
+import { useTransferRestriction } from "@/hooks/useTransferRestriction";
 import { TokenSelector } from "./token-selector";
 import { SwapSettings } from "./swap-settings";
 import { PriceImpact } from "./price-impact";
@@ -13,6 +14,7 @@ import {
   parseTokenAmount,
   calculatePriceImpact,
 } from "@/lib/utils";
+import { CONTRACTS } from "@/lib/contracts";
 import type { TokenInfo } from "@/lib/token-list";
 
 export function SwapCard() {
@@ -47,6 +49,34 @@ export function SwapCard() {
   const needsApproval = tokenIn && amountIn > 0n && allowance < amountIn;
   const insufficientBalance = tokenIn && amountIn > 0n && balanceIn < amountIn;
 
+  // ERC-1404 pre-checks: verify sender can send tokenIn, and can receive tokenOut
+  const { address } = useWeb3();
+  const pairAddress = CONTRACTS.Factory !== "0x" ? CONTRACTS.Router : undefined;
+
+  const sendRestriction = useTransferRestriction(
+    tokenIn?.address,
+    address ?? undefined,
+    pairAddress,
+    amountIn,
+    tokenIn?.isERC1404 ?? false
+  );
+
+  const receiveRestriction = useTransferRestriction(
+    tokenOut?.address,
+    pairAddress,
+    address ?? undefined,
+    amountOut,
+    tokenOut?.isERC1404 ?? false
+  );
+
+  const hasRestriction = sendRestriction.restricted || receiveRestriction.restricted;
+  const restrictionMessage = sendRestriction.restricted
+    ? `${tokenIn?.symbol}: ${sendRestriction.message}`
+    : receiveRestriction.restricted
+      ? `${tokenOut?.symbol}: ${receiveRestriction.message}`
+      : null;
+  const isCheckingRestriction = sendRestriction.isChecking || receiveRestriction.isChecking;
+
   const priceImpact = useMemo(() => {
     if (!amountIn || !amountOut) return 0;
     // Simplified — actual would use reserves
@@ -64,11 +94,13 @@ export function SwapCard() {
     if (!tokenIn || !tokenOut) return { label: "Select tokens", action: undefined, disabled: true };
     if (!amountInStr || amountIn === 0n) return { label: "Enter an amount", action: undefined, disabled: true };
     if (insufficientBalance) return { label: "Insufficient balance", action: undefined, disabled: true };
+    if (isCheckingRestriction) return { label: "Checking permissions...", action: undefined, disabled: true };
+    if (hasRestriction) return { label: "Transfer restricted", action: undefined, disabled: true };
     if (needsApproval) return { label: isApproving ? "Approving..." : `Approve ${tokenIn.symbol}`, action: approve, disabled: isApproving };
     if (isSwapping) return { label: "Swapping...", action: undefined, disabled: true };
     if (error) return { label: "Swap", action: () => swap(slippage * 100), disabled: false };
     return { label: "Swap", action: () => swap(slippage * 100), disabled: isQuoting };
-  }, [isConnected, tokenIn, tokenOut, amountInStr, amountIn, insufficientBalance, needsApproval, isApproving, isSwapping, isQuoting, error, slippage, connect, approve, swap]);
+  }, [isConnected, tokenIn, tokenOut, amountInStr, amountIn, insufficientBalance, isCheckingRestriction, hasRestriction, needsApproval, isApproving, isSwapping, isQuoting, error, slippage, connect, approve, swap]);
 
   return (
     <div className="w-full max-w-[460px] mx-auto">
@@ -233,8 +265,27 @@ export function SwapCard() {
           </div>
         )}
 
+        {/* ERC-1404 Restriction Warning */}
+        {hasRestriction && restrictionMessage && (
+          <div className="mb-3 px-3 py-2.5 rounded-lg bg-plotswap-warning/10 border border-plotswap-warning/20">
+            <div className="flex items-start gap-2">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5 flex-shrink-0">
+                <path d="M8 1L1 14h14L8 1z" stroke="#F59E0B" strokeWidth="1.5" strokeLinejoin="round" />
+                <path d="M8 6v3M8 11h.01" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <div>
+                <p className="text-xs font-medium text-plotswap-warning">Transfer Restricted</p>
+                <p className="text-xs text-plotswap-warning/80 mt-0.5">{restrictionMessage}</p>
+                <p className="text-[10px] text-plotswap-text-subtle mt-1">
+                  This ERC-1404 security token requires whitelist approval. Contact the token issuer for access.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error */}
-        {error && (
+        {error && !hasRestriction && (
           <div className="mb-3 px-3 py-2 rounded-lg bg-plotswap-danger/10 border border-plotswap-danger/20 text-plotswap-danger text-xs">
             {error}
           </div>

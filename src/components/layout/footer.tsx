@@ -6,6 +6,14 @@ export function Footer() {
           <span>PlotSwap.markets</span>
           <div className="flex items-center gap-4">
             <a
+              href="https://dashboard.integralayer.com/auth"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-plotswap-text transition-colors"
+            >
+              Integra Dashboard
+            </a>
+            <a
               href="https://faucet.integralayer.com"
               target="_blank"
               rel="noopener noreferrer"
