@@ -26,19 +26,14 @@ export function SwapSettings({
   return (
     <div className="absolute right-0 top-full mt-2 w-72 glass-card-elevated p-4 z-40">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium">Transaction Settings</span>
-        <button
-          onClick={onClose}
-          className="text-plotswap-text-muted hover:text-plotswap-text"
-        >
+        <span className="text-sm font-medium text-plotswap-text">Transaction Settings</span>
+        <button onClick={onClose} className="text-plotswap-text-muted hover:text-plotswap-text">
           &times;
         </button>
       </div>
 
       <div className="mb-4">
-        <label className="text-xs text-plotswap-text-muted mb-2 block">
-          Slippage Tolerance
-        </label>
+        <label className="text-xs text-plotswap-text-muted mb-2 block">Slippage Tolerance</label>
         <div className="flex gap-2">
           {SLIPPAGE_PRESETS.map((v) => (
             <button
@@ -47,8 +42,8 @@ export function SwapSettings({
               className={cn(
                 "flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors",
                 slippage === v
-                  ? "bg-plotswap-primary/20 text-plotswap-primary-light border border-plotswap-primary/30"
-                  : "bg-white/5 text-plotswap-text-muted hover:bg-white/10"
+                  ? "bg-plotswap-primary/20 text-plotswap-primary border border-plotswap-primary/30"
+                  : "bg-plotswap-primary/5 text-plotswap-text-muted hover:bg-plotswap-primary/10"
               )}
             >
               {v}%
@@ -64,9 +59,7 @@ export function SwapSettings({
               min="0.01"
               max="50"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-plotswap-text-muted">
-              %
-            </span>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-plotswap-text-muted">%</span>
           </div>
         </div>
         {slippage > 5 && (
@@ -77,9 +70,7 @@ export function SwapSettings({
       </div>
 
       <div>
-        <label className="text-xs text-plotswap-text-muted mb-2 block">
-          Transaction Deadline
-        </label>
+        <label className="text-xs text-plotswap-text-muted mb-2 block">Transaction Deadline</label>
         <div className="flex items-center gap-2">
           <input
             type="number"

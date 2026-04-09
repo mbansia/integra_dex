@@ -17,7 +17,7 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl" style={{ borderColor: "var(--ps-border)", background: "color-mix(in srgb, var(--ps-bg) 80%, transparent)" }}>
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-plotswap-border backdrop-blur-xl bg-plotswap-bg/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex-shrink-0">
@@ -32,8 +32,8 @@ export function Header() {
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                   pathname === item.href
-                    ? "bg-plotswap-primary/15 text-plotswap-primary-light"
-                    : "text-plotswap-text-muted hover:text-plotswap-text hover:bg-white/5"
+                    ? "bg-plotswap-primary/15 text-plotswap-primary"
+                    : "text-plotswap-text-muted hover:text-plotswap-text hover:bg-plotswap-primary/5"
                 )}
               >
                 {item.label}

@@ -16,7 +16,7 @@ export default function PoolPage() {
             className={cn(
               "flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors",
               tab === "add"
-                ? "bg-plotswap-primary/15 text-plotswap-primary-light"
+                ? "bg-plotswap-primary/15 text-plotswap-primary"
                 : "text-plotswap-text-muted hover:text-plotswap-text"
             )}
           >
@@ -27,7 +27,7 @@ export default function PoolPage() {
             className={cn(
               "flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors",
               tab === "positions"
-                ? "bg-plotswap-primary/15 text-plotswap-primary-light"
+                ? "bg-plotswap-primary/15 text-plotswap-primary"
                 : "text-plotswap-text-muted hover:text-plotswap-text"
             )}
           >

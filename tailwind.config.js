@@ -7,23 +7,25 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Accent colors — same in both modes
         plotswap: {
-          primary: "#6366F1",
-          "primary-hover": "#4F46E5",
-          "primary-light": "#818CF8",
+          primary: "#3B82F6",
+          "primary-hover": "#2563EB",
+          "primary-light": "#60A5FA",
           accent: "#06B6D4",
           "accent-light": "#22D3EE",
-          bg: "#0B0B14",
-          card: "rgba(17, 17, 35, 0.8)",
-          "card-elevated": "rgba(25, 25, 50, 0.7)",
-          border: "rgba(99, 102, 241, 0.12)",
-          "border-strong": "rgba(99, 102, 241, 0.25)",
-          text: "#E8E8F0",
-          "text-muted": "#9CA3AF",
-          "text-subtle": "#6B7280",
           success: "#10B981",
           danger: "#EF4444",
           warning: "#F59E0B",
+          // Theme-responsive via CSS variables
+          bg: "var(--ps-bg)",
+          card: "var(--ps-card)",
+          "card-elevated": "var(--ps-card-elevated)",
+          border: "var(--ps-border)",
+          "border-strong": "var(--ps-border-strong)",
+          text: "var(--ps-text)",
+          "text-muted": "var(--ps-text-muted)",
+          "text-subtle": "var(--ps-text-subtle)",
         },
       },
       fontFamily: {
@@ -38,13 +40,13 @@ module.exports = {
         "2xl": "1.5rem",
       },
       backgroundImage: {
-        "plotswap-gradient": "linear-gradient(135deg, #6366F1, #06B6D4)",
-        "plotswap-button": "linear-gradient(135deg, #6366F1, #8B5CF6)",
-        "plotswap-text": "linear-gradient(135deg, #818CF8, #06B6D4, #6366F1)",
+        "plotswap-gradient": "linear-gradient(135deg, #3B82F6, #06B6D4)",
+        "plotswap-button": "linear-gradient(135deg, #3B82F6, #6366F1)",
+        "plotswap-text": "linear-gradient(135deg, #60A5FA, #06B6D4, #3B82F6)",
       },
       boxShadow: {
-        glow: "0 0 20px rgba(99, 102, 241, 0.3)",
-        "glow-lg": "0 0 40px rgba(99, 102, 241, 0.2)",
+        glow: "0 0 20px rgba(59, 130, 246, 0.3)",
+        "glow-lg": "0 0 40px rgba(59, 130, 246, 0.2)",
       },
     },
   },

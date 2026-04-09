@@ -9,6 +9,7 @@ import { useTransferRestriction } from "@/hooks/useTransferRestriction";
 import { TokenSelector } from "./token-selector";
 import { SwapSettings } from "./swap-settings";
 import { PriceImpact } from "./price-impact";
+import { ConnectModal } from "@/components/shared/connect-modal";
 import {
   formatTokenAmount,
   parseTokenAmount,
@@ -16,8 +17,6 @@ import {
 } from "@/lib/utils";
 import { CONTRACTS } from "@/lib/contracts";
 import type { TokenInfo } from "@/lib/token-list";
-
-import { ConnectModal } from "@/components/shared/connect-modal";
 
 export function SwapCard() {
   const { isConnected } = useWeb3();
@@ -52,24 +51,14 @@ export function SwapCard() {
   const needsApproval = tokenIn && amountIn > 0n && allowance < amountIn;
   const insufficientBalance = tokenIn && amountIn > 0n && balanceIn < amountIn;
 
-  // ERC-1404 pre-checks: verify sender can send tokenIn, and can receive tokenOut
   const { address } = useWeb3();
   const pairAddress = CONTRACTS.Factory !== "0x" ? CONTRACTS.Router : undefined;
 
   const sendRestriction = useTransferRestriction(
-    tokenIn?.address,
-    address ?? undefined,
-    pairAddress,
-    amountIn,
-    tokenIn?.isERC1404 ?? false
+    tokenIn?.address, address ?? undefined, pairAddress, amountIn, tokenIn?.isERC1404 ?? false
   );
-
   const receiveRestriction = useTransferRestriction(
-    tokenOut?.address,
-    pairAddress,
-    address ?? undefined,
-    amountOut,
-    tokenOut?.isERC1404 ?? false
+    tokenOut?.address, pairAddress, address ?? undefined, amountOut, tokenOut?.isERC1404 ?? false
   );
 
   const hasRestriction = sendRestriction.restricted || receiveRestriction.restricted;
@@ -82,7 +71,6 @@ export function SwapCard() {
 
   const priceImpact = useMemo(() => {
     if (!amountIn || !amountOut) return 0;
-    // Simplified — actual would use reserves
     return calculatePriceImpact(amountIn, amountOut, amountIn * 100n, amountOut * 100n);
   }, [amountIn, amountOut]);
 
@@ -110,7 +98,7 @@ export function SwapCard() {
       <div className="glass-card p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 relative">
-          <h2 className="text-lg font-semibold">Swap</h2>
+          <h2 className="text-lg font-semibold text-plotswap-text">Swap</h2>
           <button
             onClick={() => setShowSettings(!showSettings)}
             className="text-plotswap-text-muted hover:text-plotswap-text transition-colors p-1"
@@ -139,10 +127,8 @@ export function SwapCard() {
               <span className="text-xs text-plotswap-text-muted">
                 Balance: {formatTokenAmount(balanceIn, tokenIn.decimals, 4)}
                 <button
-                  onClick={() =>
-                    setAmountInStr(formatTokenAmount(balanceIn, tokenIn.decimals, tokenIn.decimals))
-                  }
-                  className="ml-1 text-plotswap-primary-light hover:text-plotswap-primary"
+                  onClick={() => setAmountInStr(formatTokenAmount(balanceIn, tokenIn.decimals, tokenIn.decimals))}
+                  className="ml-1 text-plotswap-primary hover:text-plotswap-primary-hover"
                 >
                   MAX
                 </button>
@@ -159,7 +145,7 @@ export function SwapCard() {
                 const val = e.target.value.replace(/[^0-9.]/g, "");
                 if (val.split(".").length <= 2) setAmountInStr(val);
               }}
-              className="flex-1 bg-transparent text-2xl font-mono outline-none placeholder-plotswap-text-subtle"
+              className="flex-1 bg-transparent text-2xl font-mono outline-none text-plotswap-text placeholder-plotswap-text-subtle"
             />
             <button
               onClick={() => setSelectorFor("in")}
@@ -167,10 +153,10 @@ export function SwapCard() {
             >
               {tokenIn ? (
                 <>
-                  <div className="w-6 h-6 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary-light">
+                  <div className="w-6 h-6 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary">
                     {tokenIn.symbol.slice(0, 2)}
                   </div>
-                  <span className="font-medium text-sm">{tokenIn.symbol}</span>
+                  <span className="font-medium text-sm text-plotswap-text">{tokenIn.symbol}</span>
                 </>
               ) : (
                 <span className="text-sm text-plotswap-text-muted">Select</span>
@@ -186,7 +172,7 @@ export function SwapCard() {
         <div className="flex justify-center -my-3 relative z-10">
           <button
             onClick={handleFlip}
-            className="w-10 h-10 rounded-xl bg-plotswap-bg border border-plotswap-border flex items-center justify-center hover:border-plotswap-primary/30 hover:bg-plotswap-primary/5 transition-all"
+            className="w-10 h-10 rounded-xl bg-plotswap-bg border border-plotswap-border flex items-center justify-center hover:border-plotswap-primary/30 hover:bg-plotswap-primary/5 transition-all text-plotswap-text-muted"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 2v12M8 14l-3-3M8 14l3-3M8 2L5 5M8 2l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -225,7 +211,7 @@ export function SwapCard() {
                   <div className="w-6 h-6 rounded-full bg-plotswap-accent/20 flex items-center justify-center text-[10px] font-bold text-plotswap-accent">
                     {tokenOut.symbol.slice(0, 2)}
                   </div>
-                  <span className="font-medium text-sm">{tokenOut.symbol}</span>
+                  <span className="font-medium text-sm text-plotswap-text">{tokenOut.symbol}</span>
                 </>
               ) : (
                 <span className="text-sm text-plotswap-text-muted">Select</span>
@@ -242,18 +228,16 @@ export function SwapCard() {
           <div className="space-y-2 mb-4 px-1">
             <div className="flex justify-between text-xs">
               <span className="text-plotswap-text-muted">Rate</span>
-              <span className="font-mono">
+              <span className="font-mono text-plotswap-text">
                 1 {tokenIn.symbol} ={" "}
-                {amountIn > 0n
-                  ? (Number(amountOut) / Number(amountIn)).toFixed(6)
-                  : "—"}{" "}
+                {amountIn > 0n ? (Number(amountOut) / Number(amountIn)).toFixed(6) : "—"}{" "}
                 {tokenOut.symbol}
               </span>
             </div>
             <PriceImpact impact={priceImpact} />
             <div className="flex justify-between text-xs">
               <span className="text-plotswap-text-muted">Minimum received</span>
-              <span className="font-mono">
+              <span className="font-mono text-plotswap-text">
                 {formatTokenAmount(
                   amountOut - (amountOut * BigInt(Math.round(slippage * 100))) / 10000n,
                   tokenOut.decimals
@@ -263,7 +247,7 @@ export function SwapCard() {
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-plotswap-text-muted">LP Fee</span>
-              <span className="font-mono">0.3%</span>
+              <span className="font-mono text-plotswap-text">0.3%</span>
             </div>
           </div>
         )}
@@ -315,9 +299,7 @@ export function SwapCard() {
           if (selectorFor === "in") setTokenIn(token);
           else setTokenOut(token);
         }}
-        excludeAddress={
-          selectorFor === "in" ? tokenOut?.address : tokenIn?.address
-        }
+        excludeAddress={selectorFor === "in" ? tokenOut?.address : tokenIn?.address}
       />
     </div>
   );

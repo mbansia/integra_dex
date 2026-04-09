@@ -102,7 +102,7 @@ export default function HomePage() {
               Trade tokens
             </span>
             <br />
-            <span className="text-plotswap-text dark:text-white">on Integra</span>
+            <span className="text-plotswap-text">on Integra</span>
           </h1>
         </div>
 
@@ -178,7 +178,7 @@ export default function HomePage() {
           ].map((feature) => (
             <div
               key={feature.title}
-              className="group relative p-6 rounded-xl border border-plotswap-border bg-[#0a0e1a]/80 dark:bg-[#0a0e1a]/80 transition-all hover:border-plotswap-border-strong hover:-translate-y-1 hover:shadow-lg"
+              className="group relative p-6 rounded-xl border border-plotswap-border bg-plotswap-card transition-all hover:border-plotswap-border-strong hover:-translate-y-1 hover:shadow-lg"
             >
               <div
                 className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"

@@ -30,7 +30,7 @@ export function PoolCard({ pair, tokenA, tokenB }: PoolCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2">
-            <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary-light border-2 border-plotswap-bg">
+            <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary border-2 border-plotswap-bg">
               {tokenA.symbol.slice(0, 2)}
             </div>
             <div className="w-8 h-8 rounded-full bg-plotswap-accent/20 flex items-center justify-center text-[10px] font-bold text-plotswap-accent border-2 border-plotswap-bg">

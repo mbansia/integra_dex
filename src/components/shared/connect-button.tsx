@@ -20,7 +20,7 @@ export function ConnectButton() {
         >
           {isConnecting ? (
             <span className="flex items-center gap-2">
-              <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
               Connecting...
             </span>
           ) : (
