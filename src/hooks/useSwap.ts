@@ -6,11 +6,22 @@ import { ROUTER_ABI } from "@/lib/abis/PlotswapRouter";
 import { CONTRACTS } from "@/lib/contracts";
 import { calculateMinimumReceived } from "@/lib/utils";
 
+const NATIVE = "0x0000000000000000000000000000000000000000";
+const WIRL = "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34" as `0x${string}`;
+
+// Swap native IRL address for WIRL in paths (Router works with ERC-20s)
+function resolveAddress(addr: `0x${string}` | undefined): `0x${string}` | undefined {
+  if (!addr) return addr;
+  return addr === NATIVE ? WIRL : addr;
+}
+
 export function useSwap(
   tokenIn: `0x${string}` | undefined,
   tokenOut: `0x${string}` | undefined,
   amountIn: bigint
 ) {
+  const effectiveIn = resolveAddress(tokenIn);
+  const effectiveOut = resolveAddress(tokenOut);
   const { address, walletClient, publicClient } = useWeb3();
   const [amountOut, setAmountOut] = useState<bigint>(0n);
   const [isQuoting, setIsQuoting] = useState(false);
@@ -20,10 +31,10 @@ export function useSwap(
   // Fetch quote
   useEffect(() => {
     if (
-      !tokenIn ||
-      !tokenOut ||
-      tokenIn === "0x" ||
-      tokenOut === "0x" ||
+      !effectiveIn ||
+      !effectiveOut ||
+      effectiveIn === "0x" ||
+      effectiveOut === "0x" ||
       amountIn === 0n
     ) {
       setAmountOut(0n);
@@ -38,7 +49,7 @@ export function useSwap(
           address: CONTRACTS.Router,
           abi: ROUTER_ABI,
           functionName: "getAmountsOut",
-          args: [amountIn, [tokenIn, tokenOut]],
+          args: [amountIn, [effectiveIn, effectiveOut]],
         });
         const amounts = result as bigint[];
         setAmountOut(amounts[amounts.length - 1]);
@@ -53,7 +64,7 @@ export function useSwap(
 
     const debounce = setTimeout(fetchQuote, 300);
     return () => clearTimeout(debounce);
-  }, [tokenIn, tokenOut, amountIn, publicClient]);
+  }, [effectiveIn, effectiveOut, amountIn, publicClient]);
 
   // Execute swap
   const swap = useCallback(
@@ -61,8 +72,8 @@ export function useSwap(
       if (
         !walletClient ||
         !address ||
-        !tokenIn ||
-        !tokenOut ||
+        !effectiveIn ||
+        !effectiveOut ||
         amountIn === 0n ||
         amountOut === 0n
       )
@@ -78,7 +89,7 @@ export function useSwap(
           address: CONTRACTS.Router,
           abi: ROUTER_ABI,
           functionName: "swapExactTokensForTokens",
-          args: [amountIn, minOut, [tokenIn, tokenOut], address, deadline],
+          args: [amountIn, minOut, [effectiveIn, effectiveOut], address, deadline],
           account: address,
           chain: walletClient.chain,
         });
@@ -96,7 +107,7 @@ export function useSwap(
       }
       setIsSwapping(false);
     },
-    [walletClient, address, tokenIn, tokenOut, amountIn, amountOut, publicClient]
+    [walletClient, address, effectiveIn, effectiveOut, amountIn, amountOut, publicClient]
   );
 
   return { amountOut, isQuoting, isSwapping, error, swap };

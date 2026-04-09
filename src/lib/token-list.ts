@@ -19,7 +19,7 @@ export const DEFAULT_TOKEN_LIST: TokenInfo[] = [
     isERC1404: false,
   },
   {
-    address: "0x8251b03802b98f2Ea58457e28C57B0Fbd3101eF5",
+    address: "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34",
     name: "Wrapped IRL",
     symbol: "WIRL",
     decimals: 18,

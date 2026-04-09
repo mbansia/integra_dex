@@ -83,8 +83,6 @@ export function SwapCard() {
   const buttonState = useMemo(() => {
     if (!isConnected) return { label: "Connect Wallet", action: () => setShowConnect(true), disabled: false };
     if (!tokenIn || !tokenOut) return { label: "Select tokens", action: undefined, disabled: true };
-    const hasNative = tokenIn?.address === "0x0000000000000000000000000000000000000000" || tokenOut?.address === "0x0000000000000000000000000000000000000000";
-    if (hasNative) return { label: "Use WIRL instead of IRL", action: undefined, disabled: true };
     if (!amountInStr || amountIn === 0n) return { label: "Enter an amount", action: undefined, disabled: true };
     if (insufficientBalance) return { label: "Insufficient balance", action: undefined, disabled: true };
     if (isCheckingRestriction) return { label: "Checking permissions...", action: undefined, disabled: true };
