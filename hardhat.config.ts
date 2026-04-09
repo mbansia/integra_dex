@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-ignition-ethers";
@@ -13,7 +14,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     "integra-testnet": {
-      url: process.env.INTEGRA_RPC_URL || "https://testnet-rpc.integralayer.com",
+      url: process.env.INTEGRA_RPC_URL || "https://testnet.integralayer.com/evm",
       chainId: 26218,
       accounts: process.env.DEPLOYER_PRIVATE_KEY
         ? [process.env.DEPLOYER_PRIVATE_KEY]

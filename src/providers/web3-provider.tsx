@@ -69,7 +69,7 @@ async function getWeb3Auth() {
       {
         chainNamespace: CHAIN_NAMESPACES.EIP155,
         chainId: "0x666A",
-        rpcTarget: "https://testnet-rpc.integralayer.com",
+        rpcTarget: "https://testnet.integralayer.com/evm",
         displayName: "Integra Testnet",
         blockExplorerUrl: "https://explorer.integralayer.com",
         ticker: "IRL",
@@ -156,7 +156,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
                   chainId: "0x666A",
                   chainName: "Integra Testnet",
                   nativeCurrency: { name: "IRL", symbol: "IRL", decimals: 18 },
-                  rpcUrls: ["https://testnet-rpc.integralayer.com"],
+                  rpcUrls: ["https://testnet.integralayer.com/evm"],
                   blockExplorerUrls: ["https://explorer.integralayer.com"],
                 },
               ],

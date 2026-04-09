@@ -5,7 +5,7 @@ export const integraTestnet = defineChain({
   name: "Integra Testnet",
   nativeCurrency: { name: "IRL", symbol: "IRL", decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://testnet-rpc.integralayer.com"] },
+    default: { http: ["https://testnet.integralayer.com/evm"] },
   },
   blockExplorers: {
     default: {
