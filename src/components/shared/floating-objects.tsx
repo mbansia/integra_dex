@@ -61,7 +61,7 @@ function createObject(id: number, canvasW: number, canvasH: number): FloatingObj
     rotationSpeed: (Math.random() - 0.5) * 0.4,
     size: 36 + Math.random() * 28,
     icon: icon.path,
-    opacity: 0.12 + Math.random() * 0.10,
+    opacity: 0.24 + Math.random() * 0.20,
   };
 }
 

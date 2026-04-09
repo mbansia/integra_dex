@@ -42,8 +42,26 @@ export function useLiquidity() {
         console.log("[PlotSwap] Adding liquidity:", {
           tokenA: resolvedA, tokenB: resolvedB,
           amountA: amountA.toString(), amountB: amountB.toString(),
-          router: CONTRACTS.Router,
+          amountAMin: amountAMin.toString(), amountBMin: amountBMin.toString(),
+          router: CONTRACTS.Router, to: address, deadline: deadline.toString(),
         });
+
+        // Pre-flight: simulate the call to get revert reason
+        try {
+          await publicClient.simulateContract({
+            address: CONTRACTS.Router,
+            abi: ROUTER_ABI,
+            functionName: "addLiquidity",
+            args: [resolvedA, resolvedB, amountA, amountB, amountAMin, amountBMin, address, deadline],
+            account: address,
+          });
+        } catch (simErr: any) {
+          console.error("[PlotSwap] Simulation failed:", simErr);
+          const reason = simErr?.shortMessage || simErr?.message || "Unknown error";
+          setError("Simulation failed: " + reason);
+          setIsPending(false);
+          return;
+        }
 
         const hash = await walletClient.writeContract({
           address: CONTRACTS.Router,
