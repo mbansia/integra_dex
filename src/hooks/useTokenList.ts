@@ -6,7 +6,7 @@ import { FACTORY_ABI } from "@/lib/abis/PlotswapFactory";
 import { PAIR_ABI } from "@/lib/abis/PlotswapPair";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { CONTRACTS } from "@/lib/contracts";
-import type { TokenInfo } from "@/lib/token-list";
+import { DEFAULT_TOKEN_LIST, type TokenInfo } from "@/lib/token-list";
 
 const ERC1404_CHECK_ABI = [
   {
@@ -103,12 +103,13 @@ async function fetchTokenInfo(
 
 export function useTokenList() {
   const { publicClient } = useWeb3();
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [tokens, setTokens] = useState<TokenInfo[]>(DEFAULT_TOKEN_LIST);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!CONTRACTS.Factory || CONTRACTS.Factory === "0x") {
-      setIsLoading(false);
+      // No factory deployed — just use default list
+      setTokens(DEFAULT_TOKEN_LIST);
       return;
     }
 
@@ -164,7 +165,13 @@ export function useTokenList() {
           tokenAddresses.map((addr) => fetchTokenInfo(publicClient, addr))
         );
 
-        setTokens(tokenInfos.filter((t): t is TokenInfo => t !== null));
+        // Merge discovered tokens with defaults (no duplicates)
+        const discovered = tokenInfos.filter((t): t is TokenInfo => t !== null);
+        const seenInDiscovery = new Set(discovered.map((t) => t.address.toLowerCase()));
+        const defaults = DEFAULT_TOKEN_LIST.filter(
+          (t) => !seenInDiscovery.has(t.address.toLowerCase())
+        );
+        setTokens([...defaults, ...discovered]);
       } catch (err) {
         console.error("Token discovery error:", err);
       }
