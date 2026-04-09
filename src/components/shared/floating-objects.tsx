@@ -61,7 +61,7 @@ function createObject(id: number, canvasW: number, canvasH: number): FloatingObj
     rotationSpeed: (Math.random() - 0.5) * 0.4,
     size: 36 + Math.random() * 28,
     icon: icon.path,
-    opacity: 0.24 + Math.random() * 0.20,
+    opacity: 0.17 + Math.random() * 0.14,
   };
 }
 
@@ -131,12 +131,12 @@ export function FloatingObjects() {
   return (
     <div
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[1] overflow-hidden"
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
     >
       {objectsRef.current.map((obj) => (
         <div
           key={obj.id}
-          className="absolute pointer-events-auto cursor-grab active:cursor-grabbing"
+          className="absolute"
           style={{
             left: obj.x - obj.size / 2,
             top: obj.y - obj.size / 2,
