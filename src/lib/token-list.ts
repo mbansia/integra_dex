@@ -11,6 +11,14 @@ export interface TokenInfo {
 // Auto-discovery from Factory pairs supplements this list
 export const DEFAULT_TOKEN_LIST: TokenInfo[] = [
   {
+    address: "0x0000000000000000000000000000000000000000",
+    name: "Integra Real Life",
+    symbol: "IRL",
+    decimals: 18,
+    logoURI: "",
+    isERC1404: false,
+  },
+  {
     address: "0xa640D8B5C9Cb3b989881B8E63B0f30179C78a04f",
     name: "Testnet USDI",
     symbol: "tUSDI",
