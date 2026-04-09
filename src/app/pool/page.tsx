@@ -45,7 +45,7 @@ export default function PoolPage() {
       </div>
 
       {/* Existing pools below */}
-      <ExistingPools />
+      <ExistingPools onManage={() => setTab("positions")} />
     </div>
   );
 }

@@ -7,8 +7,6 @@ import { PAIR_ABI } from "@/lib/abis/PlotswapPair";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { CONTRACTS } from "@/lib/contracts";
 import { formatTokenAmount } from "@/lib/utils";
-import Link from "next/link";
-
 interface PoolInfo {
   address: `0x${string}`;
   token0: { address: `0x${string}`; symbol: string; decimals: number };
@@ -31,7 +29,7 @@ async function fetchTokenMeta(publicClient: any, addr: `0x${string}`) {
   }
 }
 
-export function ExistingPools() {
+export function ExistingPools({ onManage }: { onManage?: () => void }) {
   const { publicClient, address } = useWeb3();
   const [pools, setPools] = useState<PoolInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,12 +202,12 @@ export function ExistingPools() {
                       Your LP: <span className="font-mono text-plotswap-text">{formatTokenAmount(pool.userLpBalance, 18, 6)}</span>
                       <span className="ml-2">({sharePercent.toFixed(2)}%)</span>
                     </div>
-                    <Link
-                      href="/pool"
+                    <button
+                      onClick={onManage}
                       className="text-xs font-medium text-plotswap-primary hover:text-plotswap-primary-hover transition-colors"
                     >
                       Manage
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>
