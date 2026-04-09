@@ -1,7 +1,13 @@
 "use client";
 
 import { PixelMascot } from "./pixel-mascot";
+import { FloatingObjects } from "./floating-objects";
 
 export function MascotWrapper() {
-  return <PixelMascot size={80} />;
+  return (
+    <>
+      <FloatingObjects />
+      <PixelMascot size={80} />
+    </>
+  );
 }

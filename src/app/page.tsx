@@ -47,31 +47,7 @@ export default function HomePage() {
           }}
         />
 
-        {/* Floating real estate icons (blue-tinted SVGs) */}
-        {[
-          { top: "8%", left: "5%", delay: "0s", anim: "animate-float", icon: "M3 12l9-8 9 8M5 12v7h4v-4h6v4h4v-7" }, // house
-          { top: "15%", right: "7%", delay: "1s", anim: "animate-float-reverse", icon: "M2 20h20M4 20V8l8-6 8 6v12" }, // building front
-          { top: "35%", left: "3%", delay: "2s", anim: "animate-float", icon: "M12 3l-8 9h3v6h4v-4h2v4h4v-6h3z" }, // house with roof
-          { bottom: "30%", right: "5%", delay: "0.5s", anim: "animate-float-reverse", icon: "M4 20h16M6 20v-8l2-2h8l2 2v8M10 20v-4h4v4" }, // apartment
-          { top: "55%", left: "8%", delay: "3s", anim: "animate-float", icon: "M9 20V10l3-3 3 3v10M3 20h18M6 14h2M16 14h2M6 17h2M16 17h2" }, // tower
-          { top: "22%", left: "15%", delay: "4s", anim: "animate-float-reverse", icon: "M4 11l8-8 8 8M7 9v10h10V9" }, // simple house
-          { bottom: "15%", left: "6%", delay: "1.5s", anim: "animate-float", icon: "M15 3h6v6M9 21H3v-6M21 3l-9 9M3 21l9-9" }, // expand/plot
-          { bottom: "40%", right: "10%", delay: "2.5s", anim: "animate-float-reverse", icon: "M3 9l9-7 9 7v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9zM9 22V12h6v10" }, // home
-          { top: "70%", right: "15%", delay: "3.5s", anim: "animate-float", icon: "M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z" }, // location pin
-          { top: "45%", right: "3%", delay: "0.8s", anim: "animate-float-reverse", icon: "M2 17l10-10 4 4 6-6M14 5h6v6" }, // chart up
-          { bottom: "10%", right: "20%", delay: "4.5s", anim: "animate-float", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" }, // cube/block
-          { top: "5%", left: "40%", delay: "2.2s", anim: "animate-float-reverse", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" }, // layers
-        ].map((item, i) => (
-          <div
-            key={i}
-            className={`absolute ${item.anim} opacity-[0.07]`}
-            style={{ top: item.top, bottom: item.bottom, left: item.left, right: item.right, animationDelay: item.delay }}
-          >
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-              <path d={item.icon} />
-            </svg>
-          </div>
-        ))}
+        {/* Floating objects now rendered globally via FloatingObjects component */}
       </div>
 
       {/* ── Content ── */}
