@@ -14,7 +14,7 @@ export function Footer() {
               Integra Dashboard
             </a>
             <a
-              href="https://faucet.integralayer.com"
+              href="https://docs.integralayer.com/tools/?tab=faucet"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-plotswap-text transition-colors"
