@@ -55,13 +55,13 @@ function createObject(id: number, canvasW: number, canvasH: number): FloatingObj
     id,
     x: Math.random() * canvasW,
     y: Math.random() * canvasH,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.3,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4,
     rotation: Math.random() * 360,
-    rotationSpeed: (Math.random() - 0.5) * 0.3,
-    size: 28 + Math.random() * 16,
+    rotationSpeed: (Math.random() - 0.5) * 0.4,
+    size: 36 + Math.random() * 28,
     icon: icon.path,
-    opacity: 0.06 + Math.random() * 0.06,
+    opacity: 0.12 + Math.random() * 0.10,
   };
 }
 
@@ -75,7 +75,7 @@ export function FloatingObjects() {
   useEffect(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    objectsRef.current = Array.from({ length: 15 }, (_, i) => createObject(i, w, h));
+    objectsRef.current = Array.from({ length: 22 }, (_, i) => createObject(i, w, h));
   }, []);
 
   // Mouse tracking
@@ -131,7 +131,7 @@ export function FloatingObjects() {
   return (
     <div
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+      className="fixed inset-0 pointer-events-none z-[1] overflow-hidden"
     >
       {objectsRef.current.map((obj) => (
         <div
@@ -160,7 +160,7 @@ export function FloatingObjects() {
             viewBox="0 0 24 24"
             fill="none"
             stroke="#3B82F6"
-            strokeWidth="1"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
