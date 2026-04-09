@@ -13,11 +13,12 @@ export function useTokenApproval(tokenAddress: `0x${string}` | undefined) {
   const [allowance, setAllowance] = useState<bigint>(0n);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const isNative = tokenAddress === NATIVE_TOKEN;
 
+  // Fetch allowance — re-runs when refreshKey changes (after approval)
   useEffect(() => {
-    // Native token never needs approval
     if (isNative) {
       setAllowance(maxUint256);
       return;
@@ -26,7 +27,7 @@ export function useTokenApproval(tokenAddress: `0x${string}` | undefined) {
       setAllowance(0n);
       return;
     }
-    const fetch = async () => {
+    const fetchAllowance = async () => {
       try {
         const result = await publicClient.readContract({
           address: tokenAddress,
@@ -34,17 +35,18 @@ export function useTokenApproval(tokenAddress: `0x${string}` | undefined) {
           functionName: "allowance",
           args: [address, CONTRACTS.Router],
         });
+        console.log("[PlotSwap] Allowance for", tokenAddress, ":", result);
         setAllowance(result as bigint);
       } catch (err) {
         console.error("[PlotSwap] Allowance check failed:", err);
         setAllowance(0n);
       }
     };
-    fetch();
-  }, [address, tokenAddress, isNative, publicClient]);
+    fetchAllowance();
+  }, [address, tokenAddress, isNative, publicClient, refreshKey]);
 
   const approve = useCallback(async () => {
-    if (isNative) return; // Native token doesn't need approval
+    if (isNative) return;
     if (!walletClient || !address || !tokenAddress) {
       setError("Wallet not connected");
       return;
@@ -68,8 +70,9 @@ export function useTokenApproval(tokenAddress: `0x${string}` | undefined) {
       });
       console.log("[PlotSwap] Approval tx:", hash);
       await publicClient.waitForTransactionReceipt({ hash });
-      setAllowance(maxUint256);
       console.log("[PlotSwap] Approval confirmed");
+      // Force re-fetch allowance from chain
+      setRefreshKey((k) => k + 1);
     } catch (err: any) {
       console.error("[PlotSwap] Approval failed:", err);
       setError(err?.shortMessage || err?.message || "Approval failed");

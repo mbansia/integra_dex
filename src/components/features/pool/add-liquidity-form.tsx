@@ -10,10 +10,17 @@ import { ConnectModal } from "@/components/shared/connect-modal";
 import { formatTokenAmount, parseTokenAmount } from "@/lib/utils";
 import type { TokenInfo } from "@/lib/token-list";
 
+const NATIVE = "0x0000000000000000000000000000000000000000" as `0x${string}`;
+const WIRL_ADDR = "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34" as `0x${string}`;
+function resolveAddr(addr: `0x${string}` | undefined): `0x${string}` | undefined {
+  if (!addr) return addr;
+  return addr === NATIVE ? WIRL_ADDR : addr;
+}
+
 export function AddLiquidityForm() {
   const { isConnected } = useWeb3();
   const [showConnect, setShowConnect] = useState(false);
-  const { addLiquidity, isPending, error } = useLiquidity();
+  const { addLiquidity, isPending, error, success } = useLiquidity();
 
   const [tokenA, setTokenA] = useState<TokenInfo | null>(null);
   const [tokenB, setTokenB] = useState<TokenInfo | null>(null);
@@ -30,19 +37,25 @@ export function AddLiquidityForm() {
     [amountBStr, tokenB]
   );
 
+  // Resolve IRL → WIRL for balance and approval
+  const resolvedAddrA = resolveAddr(tokenA?.address);
+  const resolvedAddrB = resolveAddr(tokenB?.address);
+
   const balanceA = useTokenBalance(tokenA?.address);
   const balanceB = useTokenBalance(tokenB?.address);
-  const approvalA = useTokenApproval(tokenA?.address);
-  const approvalB = useTokenApproval(tokenB?.address);
+  const approvalA = useTokenApproval(resolvedAddrA);
+  const approvalB = useTokenApproval(resolvedAddrB);
 
-  const needsApprovalA = tokenA && amountA > 0n && approvalA.allowance < amountA;
-  const needsApprovalB = tokenB && amountB > 0n && approvalB.allowance < amountB;
+  const needsApprovalA = tokenA && amountA > 0n && !approvalA.isNative && approvalA.allowance < amountA;
+  const needsApprovalB = tokenB && amountB > 0n && !approvalB.isNative && approvalB.allowance < amountB;
 
   const handleSubmit = async () => {
     if (!tokenA || !tokenB || amountA === 0n || amountB === 0n) return;
     await addLiquidity(tokenA.address, tokenB.address, amountA, amountB);
-    setAmountAStr("");
-    setAmountBStr("");
+    if (!error) {
+      setAmountAStr("");
+      setAmountBStr("");
+    }
   };
 
   const renderTokenInput = (
@@ -111,6 +124,12 @@ export function AddLiquidityForm() {
         {(error || approvalA.error || approvalB.error) && (
           <div className="px-3 py-2 rounded-lg bg-plotswap-danger/10 border border-plotswap-danger/20 text-plotswap-danger text-xs">
             {error || approvalA.error || approvalB.error}
+          </div>
+        )}
+
+        {success && (
+          <div className="px-3 py-2 rounded-lg bg-plotswap-success/10 border border-plotswap-success/20 text-plotswap-success text-xs">
+            Liquidity added successfully!
           </div>
         )}
 
