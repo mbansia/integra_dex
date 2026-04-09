@@ -97,6 +97,9 @@ export function SwapCard() {
   const buttonState = useMemo(() => {
     if (!isConnected) return { label: "Connect Wallet", action: () => setShowConnect(true), disabled: false };
     if (!tokenIn || !tokenOut) return { label: "Select tokens", action: undefined, disabled: true };
+    const bothSelected = tokenIn && tokenOut;
+    const noPair = bothSelected && !pair && !isQuoting;
+    if (noPair) return { label: "No pool exists for this pair", action: undefined, disabled: true };
     if (!amountInStr || amountIn === 0n) return { label: "Enter an amount", action: undefined, disabled: true };
     if (insufficientBalance) return { label: "Insufficient balance", action: undefined, disabled: true };
     if (isCheckingRestriction) return { label: "Checking permissions...", action: undefined, disabled: true };
