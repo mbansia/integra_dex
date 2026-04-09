@@ -128,9 +128,9 @@ export function PixelMascot({ size = 96, inline = false }: { size?: number; inli
   const handleClick = useCallback(() => {
     setIsBouncing(true);
     setTimeout(() => setIsBouncing(false), 400);
-    setJoke(JOKES[jokeIdx % JOKES.length]);
-    setJokeIdx((i) => i + 1);
-  }, [jokeIdx]);
+    const randomIdx = Math.floor(Math.random() * JOKES.length);
+    setJoke(JOKES[randomIdx]);
+  }, []);
 
   const px = size / 16;
 
