@@ -35,8 +35,10 @@ export function useLiquidity() {
       const resolvedB = resolveAddr(tokenB);
 
       try {
-        const amountAMin = amountA - (amountA * BigInt(slippageBps)) / 10000n;
-        const amountBMin = amountB - (amountB * BigInt(slippageBps)) / 10000n;
+        // Use 0 minimums to handle pools with dust reserves or new pools
+        // The Router's _addLiquidity already computes optimal amounts
+        const amountAMin = 0n;
+        const amountBMin = 0n;
         const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
 
         console.log("[PlotSwap] Adding liquidity:", {
