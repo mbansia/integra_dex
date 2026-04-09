@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PlotswapLogo } from "@/components/shared/plotswap-logo";
 import { ConnectButton } from "@/components/shared/connect-button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -16,7 +17,7 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-plotswap-border bg-plotswap-bg/80 backdrop-blur-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl" style={{ borderColor: "var(--plotswap-border)", background: "color-mix(in srgb, var(--plotswap-bg) 80%, transparent)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex-shrink-0">
@@ -40,7 +41,10 @@ export function Header() {
             ))}
           </nav>
 
-          <ConnectButton />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <ConnectButton />
+          </div>
         </div>
       </div>
     </header>

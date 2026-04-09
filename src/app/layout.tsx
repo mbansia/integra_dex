@@ -16,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen flex flex-col font-sans antialiased bg-plotswap-bg text-plotswap-text">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col font-sans antialiased" style={{ background: "var(--plotswap-bg)", color: "var(--plotswap-text)" }}>
         <Web3Provider>
           <Header />
           <main className="flex-1 pt-16">{children}</main>
