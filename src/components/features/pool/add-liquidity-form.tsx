@@ -6,11 +6,13 @@ import { useLiquidity } from "@/hooks/useLiquidity";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { TokenSelector } from "@/components/features/swap/token-selector";
+import { ConnectModal } from "@/components/shared/connect-modal";
 import { formatTokenAmount, parseTokenAmount } from "@/lib/utils";
 import type { TokenInfo } from "@/lib/token-list";
 
 export function AddLiquidityForm() {
-  const { isConnected, connect } = useWeb3();
+  const { isConnected } = useWeb3();
+  const [showConnect, setShowConnect] = useState(false);
   const { addLiquidity, isPending, error } = useLiquidity();
 
   const [tokenA, setTokenA] = useState<TokenInfo | null>(null);
@@ -132,9 +134,12 @@ export function AddLiquidityForm() {
             </button>
           )}
           {!isConnected ? (
-            <button onClick={connect} className="btn-primary w-full py-3">
-              Connect Wallet
-            </button>
+            <>
+              <button onClick={() => setShowConnect(true)} className="btn-primary w-full py-3">
+                Connect Wallet
+              </button>
+              <ConnectModal isOpen={showConnect} onClose={() => setShowConnect(false)} />
+            </>
           ) : (
             <button
               onClick={handleSubmit}

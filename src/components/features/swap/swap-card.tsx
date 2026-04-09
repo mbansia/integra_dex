@@ -17,8 +17,10 @@ import {
 import { CONTRACTS } from "@/lib/contracts";
 import type { TokenInfo } from "@/lib/token-list";
 
+import { ConnectModal } from "@/components/shared/connect-modal";
+
 export function SwapCard() {
-  const { isConnected, connect } = useWeb3();
+  const { isConnected } = useWeb3();
 
   const [tokenIn, setTokenIn] = useState<TokenInfo | null>(null);
   const [tokenOut, setTokenOut] = useState<TokenInfo | null>(null);
@@ -28,6 +30,7 @@ export function SwapCard() {
 
   const [selectorFor, setSelectorFor] = useState<"in" | "out" | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showConnect, setShowConnect] = useState(false);
 
   const amountIn = useMemo(
     () => parseTokenAmount(amountInStr, tokenIn?.decimals ?? 18),
@@ -90,7 +93,7 @@ export function SwapCard() {
   };
 
   const buttonState = useMemo(() => {
-    if (!isConnected) return { label: "Connect Wallet", action: connect, disabled: false };
+    if (!isConnected) return { label: "Connect Wallet", action: () => setShowConnect(true), disabled: false };
     if (!tokenIn || !tokenOut) return { label: "Select tokens", action: undefined, disabled: true };
     if (!amountInStr || amountIn === 0n) return { label: "Enter an amount", action: undefined, disabled: true };
     if (insufficientBalance) return { label: "Insufficient balance", action: undefined, disabled: true };
@@ -100,7 +103,7 @@ export function SwapCard() {
     if (isSwapping) return { label: "Swapping...", action: undefined, disabled: true };
     if (error) return { label: "Swap", action: () => swap(slippage * 100), disabled: false };
     return { label: "Swap", action: () => swap(slippage * 100), disabled: isQuoting };
-  }, [isConnected, tokenIn, tokenOut, amountInStr, amountIn, insufficientBalance, isCheckingRestriction, hasRestriction, needsApproval, isApproving, isSwapping, isQuoting, error, slippage, connect, approve, swap]);
+  }, [isConnected, tokenIn, tokenOut, amountInStr, amountIn, insufficientBalance, isCheckingRestriction, hasRestriction, needsApproval, isApproving, isSwapping, isQuoting, error, slippage, approve, swap]);
 
   return (
     <div className="w-full max-w-[460px] mx-auto">
@@ -300,6 +303,9 @@ export function SwapCard() {
           {buttonState.label}
         </button>
       </div>
+
+      {/* Connect Modal */}
+      <ConnectModal isOpen={showConnect} onClose={() => setShowConnect(false)} />
 
       {/* Token Selector Modal */}
       <TokenSelector

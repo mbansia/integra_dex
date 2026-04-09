@@ -18,14 +18,18 @@ import {
 } from "viem";
 import { integraTestnet } from "@/lib/chains";
 
+export type ConnectMethod = "metamask" | "web3auth";
+
 interface Web3ContextType {
   address: `0x${string}` | null;
   walletClient: WalletClient | null;
   publicClient: PublicClient;
   isConnected: boolean;
   isLoading: boolean;
+  isConnecting: boolean;
   error: string | null;
-  connect: () => Promise<void>;
+  connectedWith: ConnectMethod | null;
+  connect: (method: ConnectMethod) => Promise<void>;
   disconnect: () => Promise<void>;
 }
 
@@ -39,22 +43,21 @@ const Web3Context = createContext<Web3ContextType>({
   walletClient: null,
   publicClient,
   isConnected: false,
-  isLoading: true,
+  isLoading: false,
+  isConnecting: false,
   error: null,
+  connectedWith: null,
   connect: async () => {},
   disconnect: async () => {},
 });
 
-// Lazy-load Web3Auth to avoid SSR issues
+// Lazy-load Web3Auth
 let web3authInstance: any = null;
-
 async function getWeb3Auth() {
   if (web3authInstance) return web3authInstance;
 
   const { Web3Auth } = await import("@web3auth/modal");
-  const { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } = await import(
-    "@web3auth/base"
-  );
+  const { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } = await import("@web3auth/base");
 
   const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
   if (!clientId) return null;
@@ -84,6 +87,7 @@ async function getWeb3Auth() {
     },
   });
 
+  await w3a.init();
   web3authInstance = w3a;
   return w3a;
 }
@@ -91,80 +95,136 @@ async function getWeb3Auth() {
 export function Web3Provider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<`0x${string}` | null>(null);
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectedWith, setConnectedWith] = useState<ConnectMethod | null>(null);
 
-  const setupWallet = useCallback(async (provider: any) => {
-    const client = createWalletClient({
-      chain: integraTestnet,
-      transport: custom(provider),
-    });
-    const [addr] = await client.getAddresses();
-    setAddress(addr);
-    setWalletClient(client);
+  // Check if previously connected via MetaMask
+  useEffect(() => {
+    const checkExisting = async () => {
+      if (typeof window === "undefined") return;
+      const provider = (window as any).ethereum;
+      if (!provider) return;
+
+      try {
+        const accounts = await provider.request({ method: "eth_accounts" });
+        if (accounts && accounts.length > 0) {
+          const client = createWalletClient({
+            chain: integraTestnet,
+            transport: custom(provider),
+          });
+          const [addr] = await client.getAddresses();
+          setAddress(addr);
+          setWalletClient(client);
+          setConnectedWith("metamask");
+        }
+      } catch {}
+    };
+    checkExisting();
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const w3a = await getWeb3Auth();
-        if (!w3a) {
-          setError("Web3Auth client ID not configured");
-          setIsLoading(false);
+  const connect = useCallback(async (method: ConnectMethod) => {
+    setError(null);
+    setIsConnecting(true);
+
+    try {
+      if (method === "metamask") {
+        const provider = (window as any).ethereum;
+        if (!provider) {
+          setError("No wallet found. Install MetaMask or another browser wallet.");
+          setIsConnecting(false);
           return;
         }
 
-        await w3a.init();
-        console.log("[PlotSwap] Web3Auth initialized, connected:", w3a.connected);
+        // Request account access
+        await provider.request({ method: "eth_requestAccounts" });
 
-        if (w3a.connected && w3a.provider) {
-          await setupWallet(w3a.provider);
+        // Switch to Integra Testnet
+        try {
+          await provider.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x666A" }],
+          });
+        } catch (switchError: any) {
+          // Chain not added, add it
+          if (switchError.code === 4902) {
+            await provider.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: "0x666A",
+                  chainName: "Integra Testnet",
+                  nativeCurrency: { name: "IRL", symbol: "IRL", decimals: 18 },
+                  rpcUrls: ["https://testnet-rpc.integralayer.com"],
+                  blockExplorerUrls: ["https://explorer.integralayer.com"],
+                },
+              ],
+            });
+          }
         }
-      } catch (err: any) {
-        console.error("[PlotSwap] Web3Auth init error:", err);
-        setError(err?.message || "Failed to initialize wallet");
-      }
-      setIsLoading(false);
-    };
-    init();
-  }, [setupWallet]);
 
-  const connect = useCallback(async () => {
-    setError(null);
-    try {
-      const w3a = await getWeb3Auth();
-      if (!w3a) {
-        setError("Web3Auth not configured — set NEXT_PUBLIC_WEB3AUTH_CLIENT_ID");
-        return;
-      }
+        const client = createWalletClient({
+          chain: integraTestnet,
+          transport: custom(provider),
+        });
+        const [addr] = await client.getAddresses();
+        setAddress(addr);
+        setWalletClient(client);
+        setConnectedWith("metamask");
 
-      // Ensure initialized
-      if (!w3a.connected) {
+        // Listen for account changes
+        provider.on("accountsChanged", (accounts: string[]) => {
+          if (accounts.length === 0) {
+            setAddress(null);
+            setWalletClient(null);
+            setConnectedWith(null);
+          } else {
+            setAddress(accounts[0] as `0x${string}`);
+          }
+        });
+      } else if (method === "web3auth") {
+        const w3a = await getWeb3Auth();
+        if (!w3a) {
+          setError("Web3Auth is not configured yet. Use a browser wallet instead.");
+          setIsConnecting(false);
+          return;
+        }
+
         const provider = await w3a.connect();
         if (provider) {
-          await setupWallet(provider);
-          console.log("[PlotSwap] Connected successfully");
+          const client = createWalletClient({
+            chain: integraTestnet,
+            transport: custom(provider),
+          });
+          const [addr] = await client.getAddresses();
+          setAddress(addr);
+          setWalletClient(client);
+          setConnectedWith("web3auth");
         }
       }
     } catch (err: any) {
       console.error("[PlotSwap] Connect error:", err);
-      setError(err?.message || "Failed to connect");
+      if (err?.code === 4001) {
+        setError("Connection rejected by user");
+      } else {
+        setError(err?.message || "Failed to connect");
+      }
     }
-  }, [setupWallet]);
+    setIsConnecting(false);
+  }, []);
 
   const disconnect = useCallback(async () => {
     try {
-      const w3a = await getWeb3Auth();
-      if (w3a) {
-        await w3a.logout();
+      if (connectedWith === "web3auth" && web3authInstance) {
+        await web3authInstance.logout();
       }
-      setAddress(null);
-      setWalletClient(null);
-      setError(null);
-    } catch (err: any) {
-      console.error("[PlotSwap] Disconnect error:", err);
-    }
-  }, []);
+    } catch {}
+    setAddress(null);
+    setWalletClient(null);
+    setConnectedWith(null);
+    setError(null);
+  }, [connectedWith]);
 
   return (
     <Web3Context.Provider
@@ -174,7 +234,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         publicClient,
         isConnected: !!address,
         isLoading,
+        isConnecting,
         error,
+        connectedWith,
         connect,
         disconnect,
       }}
