@@ -94,7 +94,10 @@ export function useSwap(
           chain: walletClient.chain,
         });
 
-        await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        if (receipt.status === "reverted") {
+          setError("Swap reverted on-chain. Try increasing slippage.");
+        }
       } catch (err: any) {
         const msg =
           err?.message?.includes("TransferRestricted")

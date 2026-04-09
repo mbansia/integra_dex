@@ -63,9 +63,14 @@ export function useLiquidity() {
           chain: walletClient.chain,
         });
         console.log("[PlotSwap] Liquidity tx:", hash);
-        await publicClient.waitForTransactionReceipt({ hash });
-        console.log("[PlotSwap] Liquidity added successfully");
-        setSuccess(true);
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        console.log("[PlotSwap] Liquidity tx status:", receipt.status);
+        if (receipt.status === "reverted") {
+          setError("Transaction reverted on-chain. Check token approvals and balances.");
+        } else {
+          console.log("[PlotSwap] Liquidity added successfully");
+          setSuccess(true);
+        }
       } catch (err: any) {
         console.error("[PlotSwap] Add liquidity error:", err);
         const msg = err?.shortMessage || err?.message || "";
@@ -108,8 +113,12 @@ export function useLiquidity() {
           account: address,
           chain: walletClient.chain,
         });
-        await publicClient.waitForTransactionReceipt({ hash });
-        setSuccess(true);
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        if (receipt.status === "reverted") {
+          setError("Transaction reverted on-chain.");
+        } else {
+          setSuccess(true);
+        }
       } catch (err: any) {
         console.error("[PlotSwap] Remove liquidity error:", err);
         setError(err?.shortMessage || "Failed to remove liquidity");
