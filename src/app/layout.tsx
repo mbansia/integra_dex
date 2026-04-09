@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { MascotWrapper } from "@/components/shared/mascot-wrapper";
 import { Web3Provider } from "@/providers/web3-provider";
 import "./globals.css";
 
@@ -17,11 +18,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col font-sans antialiased" style={{ background: "var(--plotswap-bg)", color: "var(--plotswap-text)" }}>
+      <body className="min-h-screen flex flex-col font-sans antialiased" style={{ background: "var(--ps-bg)", color: "var(--ps-text)" }}>
         <Web3Provider>
           <Header />
           <main className="flex-1 pt-16">{children}</main>
           <Footer />
+          <MascotWrapper />
         </Web3Provider>
       </body>
     </html>

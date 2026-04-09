@@ -1,79 +1,87 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-// Pixel art robot trader mascot — 16x16 grid rendered as SVG
-const BODY_COLOR = "#3B82F6";
-const BODY_LIGHT = "#60A5FA";
-const VISOR_COLOR = "#06B6D4";
-const VISOR_GLOW = "#22D3EE";
-const ACCENT = "#818CF8";
-const DARK = "#1E293B";
-
-// Each row is 16 pixels wide. 1 = body, 2 = light, 3 = visor, 4 = visor glow, 5 = accent, 6 = dark, 0 = transparent
+// Pixel broker: suit, tie, briefcase, glasses
+// 16x16 grid. 1=suit, 2=shirt, 3=skin, 4=hair, 5=tie, 6=glasses, 7=briefcase, 8=shoe, 9=dark
 const FRAME_IDLE = [
-  [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-  [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],
-  [0,0,0,1,2,1,1,1,1,1,1,2,1,0,0,0],
-  [0,0,0,1,6,6,3,4,4,3,6,6,1,0,0,0],
-  [0,0,0,1,6,6,4,3,3,4,6,6,1,0,0,0],
+  [0,0,0,0,0,4,4,4,4,4,4,0,0,0,0,0],
+  [0,0,0,0,4,4,4,4,4,4,4,4,0,0,0,0],
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+  [0,0,0,0,3,6,3,3,3,3,6,3,0,0,0,0],
+  [0,0,0,0,3,6,3,3,3,3,6,3,0,0,0,0],
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+  [0,0,0,0,3,3,3,9,3,3,3,3,0,0,0,0],
+  [0,0,0,0,0,2,5,2,2,5,2,0,0,0,0,0],
+  [0,0,0,1,1,2,5,2,2,5,2,1,1,0,0,0],
+  [0,0,0,1,1,1,5,1,1,5,1,1,1,0,0,0],
+  [0,0,3,1,1,1,1,1,1,1,1,1,1,3,0,0],
   [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-  [0,0,0,0,1,6,1,5,5,1,6,1,0,0,0,0],
-  [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-  [0,0,1,1,2,1,1,1,1,1,1,2,1,1,0,0],
-  [0,5,0,1,1,1,1,1,1,1,1,1,1,0,5,0],
-  [0,5,0,1,1,2,2,1,1,2,2,1,1,0,5,0],
-  [0,5,0,0,1,1,1,1,1,1,1,1,0,0,5,0],
-  [0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0],
-  [0,0,0,0,0,1,6,0,0,6,1,0,0,0,0,0],
-  [0,0,0,0,1,1,6,0,0,6,1,1,0,0,0,0],
-  [0,0,0,0,5,5,0,0,0,0,5,5,0,0,0,0],
+  [0,0,0,0,1,1,1,0,0,1,1,1,7,7,0,0],
+  [0,0,0,0,0,1,1,0,0,1,1,0,7,7,0,0],
+  [0,0,0,0,0,8,8,0,0,8,8,0,0,0,0,0],
+  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],
 ];
 
-// Blink frame — visor dims
 const FRAME_BLINK = [
-  [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-  [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],
-  [0,0,0,1,2,1,1,1,1,1,1,2,1,0,0,0],
-  [0,0,0,1,6,6,6,6,6,6,6,6,1,0,0,0],
-  [0,0,0,1,6,6,3,3,3,3,6,6,1,0,0,0],
+  [0,0,0,0,0,4,4,4,4,4,4,0,0,0,0,0],
+  [0,0,0,0,4,4,4,4,4,4,4,4,0,0,0,0],
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+  [0,0,0,0,3,6,6,3,3,6,6,3,0,0,0,0],
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+  [0,0,0,0,3,3,3,9,3,3,3,3,0,0,0,0],
+  [0,0,0,0,0,2,5,2,2,5,2,0,0,0,0,0],
+  [0,0,0,1,1,2,5,2,2,5,2,1,1,0,0,0],
+  [0,0,0,1,1,1,5,1,1,5,1,1,1,0,0,0],
+  [0,0,3,1,1,1,1,1,1,1,1,1,1,3,0,0],
   [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-  [0,0,0,0,1,6,1,5,5,1,6,1,0,0,0,0],
-  [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-  [0,0,1,1,2,1,1,1,1,1,1,2,1,1,0,0],
-  [0,5,0,1,1,1,1,1,1,1,1,1,1,0,5,0],
-  [0,5,0,1,1,2,2,1,1,2,2,1,1,0,5,0],
-  [0,5,0,0,1,1,1,1,1,1,1,1,0,0,5,0],
-  [0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0],
-  [0,0,0,0,0,1,6,0,0,6,1,0,0,0,0,0],
-  [0,0,0,0,1,1,6,0,0,6,1,1,0,0,0,0],
-  [0,0,0,0,5,5,0,0,0,0,5,5,0,0,0,0],
+  [0,0,0,0,1,1,1,0,0,1,1,1,7,7,0,0],
+  [0,0,0,0,0,1,1,0,0,1,1,0,7,7,0,0],
+  [0,0,0,0,0,8,8,0,0,8,8,0,0,0,0,0],
+  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],
 ];
 
-const COLOR_MAP: Record<number, string> = {
-  1: BODY_COLOR,
-  2: BODY_LIGHT,
-  3: VISOR_COLOR,
-  4: VISOR_GLOW,
-  5: ACCENT,
-  6: DARK,
+const COLORS: Record<number, string> = {
+  1: "#1E3A5F",  // dark suit
+  2: "#E8E8F0",  // white shirt
+  3: "#F5C6A0",  // skin
+  4: "#2C1810",  // dark hair
+  5: "#3B82F6",  // blue tie (matches PlotSwap)
+  6: "#06B6D4",  // cyan glasses
+  7: "#8B6914",  // briefcase
+  8: "#1A1A2E",  // shoes
+  9: "#E88080",  // mouth
 };
 
-function renderFrame(frame: number[][], pixelSize: number) {
+const JOKES = [
+  "I tokenized my house. Now my landlord accepts gas fees.",
+  "AI tried to flip a property on-chain. Got rugged by the HOA.",
+  "My real estate agent is a smart contract. No small talk, just gas.",
+  "Tokenized my garage. It has more liquidity than my savings.",
+  "An AI walked into a DAO and said: 'I'd like to buy a fraction of Manhattan.'",
+  "On-chain real estate: where your house keys are literally private keys.",
+  "My AI agent bought land in the metaverse AND Dubai. Guess which had higher gas fees?",
+  "They said blockchain would disrupt real estate. My mortgage disagrees.",
+  "I asked an AI to appraise my tokenized condo. It said 'insufficient liquidity.'",
+  "Tokenized homes: finally, 0.003% of a bathroom is a real investment.",
+  "My AI landlord never sleeps, never eats, and always raises the rent on time.",
+  "Put my house in a liquidity pool. Now strangers own my kitchen.",
+];
+
+function renderFrame(frame: number[][], px: number) {
   const rects: React.ReactNode[] = [];
   for (let y = 0; y < frame.length; y++) {
     for (let x = 0; x < frame[y].length; x++) {
-      const val = frame[y][x];
-      if (val === 0) continue;
+      if (frame[y][x] === 0) continue;
       rects.push(
         <rect
           key={`${x}-${y}`}
-          x={x * pixelSize}
-          y={y * pixelSize}
-          width={pixelSize}
-          height={pixelSize}
-          fill={COLOR_MAP[val]}
-          rx={pixelSize * 0.1}
+          x={x * px}
+          y={y * px}
+          width={px}
+          height={px}
+          fill={COLORS[frame[y][x]]}
         />
       );
     }
@@ -81,62 +89,101 @@ function renderFrame(frame: number[][], pixelSize: number) {
   return rects;
 }
 
-interface PixelMascotProps {
-  size?: number;
-  className?: string;
-}
-
-export function PixelMascot({ size = 128, className = "" }: PixelMascotProps) {
+export function PixelMascot({ size = 96 }: { size?: number }) {
   const [isBlinking, setIsBlinking] = useState(false);
   const [bobOffset, setBobOffset] = useState(0);
+  const [joke, setJoke] = useState<string | null>(null);
+  const [isBouncing, setIsBouncing] = useState(false);
+  const [jokeIdx, setJokeIdx] = useState(0);
 
-  // Blink every few seconds
+  // Blink
   useEffect(() => {
     const blink = () => {
       setIsBlinking(true);
       setTimeout(() => setIsBlinking(false), 150);
     };
-    const interval = setInterval(blink, 3000 + Math.random() * 2000);
-    return () => clearInterval(interval);
+    const id = setInterval(blink, 3000 + Math.random() * 2000);
+    return () => clearInterval(id);
   }, []);
 
-  // Idle bobbing
+  // Bob
   useEffect(() => {
-    let frame = 0;
-    const animate = () => {
-      frame += 0.03;
-      setBobOffset(Math.sin(frame) * 4);
-      requestAnimationFrame(animate);
+    let f = 0;
+    const tick = () => {
+      f += 0.03;
+      setBobOffset(Math.sin(f) * 3);
+      requestAnimationFrame(tick);
     };
-    const id = requestAnimationFrame(animate);
+    const id = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const pixelSize = size / 16;
-  const frame = isBlinking ? FRAME_BLINK : FRAME_IDLE;
+  // Auto-hide joke
+  useEffect(() => {
+    if (!joke) return;
+    const t = setTimeout(() => setJoke(null), 5000);
+    return () => clearTimeout(t);
+  }, [joke]);
+
+  const handleClick = useCallback(() => {
+    setIsBouncing(true);
+    setTimeout(() => setIsBouncing(false), 400);
+    setJoke(JOKES[jokeIdx % JOKES.length]);
+    setJokeIdx((i) => i + 1);
+  }, [jokeIdx]);
+
+  const px = size / 16;
 
   return (
-    <div
-      className={`relative inline-block ${className}`}
-      style={{ transform: `translateY(${bobOffset}px)` }}
-    >
-      {/* Glow effect under the character */}
-      <div
-        className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full blur-xl"
-        style={{
-          width: size * 0.6,
-          height: size * 0.15,
-          background: "rgba(59, 130, 246, 0.3)",
-        }}
-      />
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        style={{ imageRendering: "pixelated" }}
+    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+      {/* Speech bubble */}
+      {joke && (
+        <div
+          className="animate-speech-pop max-w-[240px] px-3 py-2.5 rounded-xl text-xs leading-relaxed"
+          style={{
+            background: "var(--ps-card-elevated)",
+            border: "1px solid var(--ps-border-strong)",
+            color: "var(--ps-text)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+          }}
+        >
+          <p>{joke}</p>
+          <div
+            className="absolute -bottom-1.5 right-6 w-3 h-3 rotate-45"
+            style={{
+              background: "var(--ps-card-elevated)",
+              borderRight: "1px solid var(--ps-border-strong)",
+              borderBottom: "1px solid var(--ps-border-strong)",
+            }}
+          />
+        </div>
+      )}
+
+      {/* Mascot */}
+      <button
+        onClick={handleClick}
+        className={`relative cursor-pointer transition-transform hover:scale-105 ${isBouncing ? "animate-mascot-bounce" : ""}`}
+        style={{ transform: `translateY(${bobOffset}px)` }}
+        title="Click me for a joke!"
       >
-        {renderFrame(frame, pixelSize)}
-      </svg>
+        {/* Glow */}
+        <div
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full blur-lg"
+          style={{
+            width: size * 0.5,
+            height: size * 0.1,
+            background: "rgba(59, 130, 246, 0.25)",
+          }}
+        />
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          style={{ imageRendering: "pixelated" }}
+        >
+          {renderFrame(isBlinking ? FRAME_BLINK : FRAME_IDLE, px)}
+        </svg>
+      </button>
     </div>
   );
 }

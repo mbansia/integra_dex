@@ -68,18 +68,18 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
       <div
         className="relative w-full max-w-sm rounded-xl border"
         style={{
-          background: "#13132B",
-          borderColor: "rgba(99, 102, 241, 0.25)",
+          background: "var(--ps-card-elevated, #13132B)",
+          borderColor: "var(--ps-border-strong)",
           padding: "24px",
           boxShadow: "0 25px 50px rgba(0, 0, 0, 0.5)",
           zIndex: 10000,
         }}
       >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-white">Connect Wallet</h3>
+          <h3 className="text-lg font-semibold" style={{ color: "var(--ps-text)" }}>Connect Wallet</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl leading-none w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+            className="text-xl leading-none w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: "var(--ps-text-muted)" }}
           >
             &times;
           </button>
@@ -112,7 +112,7 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
                 <div className="flex-shrink-0">{option.icon}</div>
                 <div className="text-left flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm text-white">
+                    <span className="font-medium text-sm" style={{ color: "var(--ps-text)" }}>
                       {option.label}
                     </span>
                     {option.tag && (
@@ -120,14 +120,14 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
                         className="text-[10px] px-1.5 py-0.5 rounded-full"
                         style={{
                           background: "rgba(107, 114, 128, 0.2)",
-                          color: "#6B7280",
+                          color: "var(--ps-text-subtle)",
                         }}
                       >
                         {option.tag}
                       </span>
                     )}
                   </div>
-                  <span className="text-xs" style={{ color: "#9CA3AF" }}>
+                  <span className="text-xs" style={{ color: "var(--ps-text-muted)" }}>
                     {option.description}
                   </span>
                 </div>
@@ -136,7 +136,7 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
                   height="16"
                   viewBox="0 0 16 16"
                   fill="none"
-                  style={{ color: "#6B7280" }}
+                  style={{ color: "var(--ps-text-subtle)" }}
                 >
                   <path
                     d="M6 4l4 4-4 4"
@@ -152,7 +152,7 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
         </div>
 
         {isConnecting && (
-          <div className="mt-4 flex items-center justify-center gap-2 text-sm" style={{ color: "#9CA3AF" }}>
+          <div className="mt-4 flex items-center justify-center gap-2 text-sm" style={{ color: "var(--ps-text-muted)" }}>
             <div
               className="w-4 h-4 border-2 rounded-full animate-spin"
               style={{ borderColor: "#6366F1", borderTopColor: "transparent" }}
@@ -174,7 +174,7 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        <p className="mt-4 text-[11px] text-center" style={{ color: "#6B7280" }}>
+        <p className="mt-4 text-[11px] text-center" style={{ color: "var(--ps-text-subtle)" }}>
           By connecting, you agree to the PlotSwap Terms of Service
         </p>
       </div>
