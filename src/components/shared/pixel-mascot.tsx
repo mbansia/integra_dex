@@ -43,15 +43,15 @@ const FRAME_BLINK = [
 ];
 
 const COLORS: Record<number, string> = {
-  1: "#1E3A5F",  // dark suit
+  1: "#3B82F6",  // PlotSwap blue suit
   2: "#E8E8F0",  // white shirt
-  3: "#F5C6A0",  // skin
-  4: "#2C1810",  // dark hair
-  5: "#3B82F6",  // blue tie (matches PlotSwap)
-  6: "#06B6D4",  // cyan glasses
-  7: "#8B6914",  // briefcase
-  8: "#1A1A2E",  // shoes
-  9: "#E88080",  // mouth
+  3: "#60A5FA",  // light blue skin (stylized)
+  4: "#1E3A8A",  // dark blue hair
+  5: "#06B6D4",  // cyan tie
+  6: "#22D3EE",  // bright cyan glasses
+  7: "#6366F1",  // indigo briefcase
+  8: "#1E40AF",  // dark blue shoes
+  9: "#F0ABFC",  // mouth
 };
 
 const JOKES = [
@@ -89,7 +89,7 @@ function renderFrame(frame: number[][], px: number) {
   return rects;
 }
 
-export function PixelMascot({ size = 96 }: { size?: number }) {
+export function PixelMascot({ size = 96, inline = false }: { size?: number; inline?: boolean }) {
   const [isBlinking, setIsBlinking] = useState(false);
   const [bobOffset, setBobOffset] = useState(0);
   const [joke, setJoke] = useState<string | null>(null);
@@ -135,7 +135,7 @@ export function PixelMascot({ size = 96 }: { size?: number }) {
   const px = size / 16;
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+    <div className={`${inline ? "relative" : "fixed bottom-6 right-6 z-40"} flex flex-col items-end gap-2`}>
       {/* Speech bubble */}
       {joke && (
         <div
