@@ -12,7 +12,7 @@ export interface TokenInfo {
 export const DEFAULT_TOKEN_LIST: TokenInfo[] = [
   {
     address: "0x0000000000000000000000000000000000000000",
-    name: "Integra Real Life",
+    name: "IRL",
     symbol: "IRL",
     decimals: 18,
     logoURI: "",
