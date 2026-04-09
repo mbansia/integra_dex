@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useWeb3 } from "@/providers/web3-provider";
 import { useSwap } from "@/hooks/useSwap";
+import { usePair } from "@/hooks/usePair";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { useTransferRestriction } from "@/hooks/useTransferRestriction";
@@ -17,6 +18,13 @@ import {
 } from "@/lib/utils";
 import { CONTRACTS } from "@/lib/contracts";
 import type { TokenInfo } from "@/lib/token-list";
+
+const NATIVE = "0x0000000000000000000000000000000000000000" as `0x${string}`;
+const WIRL_ADDR = "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34" as `0x${string}`;
+function resolveAddr(addr: `0x${string}` | undefined): `0x${string}` | undefined {
+  if (!addr) return addr;
+  return addr === NATIVE ? WIRL_ADDR : addr;
+}
 
 export function SwapCard() {
   const { isConnected } = useWeb3();
@@ -44,6 +52,7 @@ export function SwapCard() {
 
   const balanceIn = useTokenBalance(tokenIn?.address);
   const balanceOut = useTokenBalance(tokenOut?.address);
+  const { pair } = usePair(resolveAddr(tokenIn?.address), resolveAddr(tokenOut?.address));
   const { allowance, approve, isPending: isApproving } = useTokenApproval(
     tokenIn?.address
   );
@@ -70,9 +79,14 @@ export function SwapCard() {
   const isCheckingRestriction = sendRestriction.isChecking || receiveRestriction.isChecking;
 
   const priceImpact = useMemo(() => {
-    if (!amountIn || !amountOut) return 0;
-    return calculatePriceImpact(amountIn, amountOut, amountIn * 100n, amountOut * 100n);
-  }, [amountIn, amountOut]);
+    if (!amountIn || !amountOut || !pair) return 0;
+    // Determine which reserve is input vs output
+    const resolvedIn = resolveAddr(tokenIn?.address);
+    const isToken0In = resolvedIn?.toLowerCase() === pair.token0.toLowerCase();
+    const reserveIn = isToken0In ? pair.reserve0 : pair.reserve1;
+    const reserveOut = isToken0In ? pair.reserve1 : pair.reserve0;
+    return calculatePriceImpact(amountIn, amountOut, reserveIn, reserveOut);
+  }, [amountIn, amountOut, pair, tokenIn]);
 
   const handleFlip = () => {
     setTokenIn(tokenOut);

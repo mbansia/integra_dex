@@ -187,12 +187,39 @@ export default function TokensPage() {
                     )}
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <Link
-                      href="/swap"
-                      className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
-                    >
-                      Trade
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      {token.address !== "0x0000000000000000000000000000000000000000" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const provider = (window as any).ethereum;
+                              if (!provider) return;
+                              await provider.request({
+                                method: "wallet_watchAsset",
+                                params: {
+                                  type: "ERC20",
+                                  options: {
+                                    address: token.address,
+                                    symbol: token.symbol.slice(0, 11),
+                                    decimals: token.decimals,
+                                  },
+                                },
+                              });
+                            } catch {}
+                          }}
+                          className="text-xs font-medium text-plotswap-primary hover:text-plotswap-primary-hover transition-colors"
+                          title="Add to wallet"
+                        >
+                          + Wallet
+                        </button>
+                      )}
+                      <Link
+                        href="/swap"
+                        className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                      >
+                        Trade
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
