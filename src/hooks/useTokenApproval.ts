@@ -6,13 +6,23 @@ import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { CONTRACTS } from "@/lib/contracts";
 import { maxUint256 } from "viem";
 
+const NATIVE_TOKEN = "0x0000000000000000000000000000000000000000";
+
 export function useTokenApproval(tokenAddress: `0x${string}` | undefined) {
   const { address, walletClient, publicClient } = useWeb3();
   const [allowance, setAllowance] = useState<bigint>(0n);
   const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isNative = tokenAddress === NATIVE_TOKEN;
 
   useEffect(() => {
-    if (!address || !tokenAddress || tokenAddress === "0x") {
+    // Native token never needs approval
+    if (isNative) {
+      setAllowance(maxUint256);
+      return;
+    }
+    if (!address || !tokenAddress || tokenAddress === "0x" || !CONTRACTS.Router || CONTRACTS.Router === "0x") {
       setAllowance(0n);
       return;
     }
@@ -25,17 +35,29 @@ export function useTokenApproval(tokenAddress: `0x${string}` | undefined) {
           args: [address, CONTRACTS.Router],
         });
         setAllowance(result as bigint);
-      } catch {
+      } catch (err) {
+        console.error("[PlotSwap] Allowance check failed:", err);
         setAllowance(0n);
       }
     };
     fetch();
-  }, [address, tokenAddress, publicClient]);
+  }, [address, tokenAddress, isNative, publicClient]);
 
   const approve = useCallback(async () => {
-    if (!walletClient || !address || !tokenAddress) return;
+    if (isNative) return; // Native token doesn't need approval
+    if (!walletClient || !address || !tokenAddress) {
+      setError("Wallet not connected");
+      return;
+    }
+    if (!CONTRACTS.Router || CONTRACTS.Router === "0x") {
+      setError("Router contract not configured");
+      return;
+    }
+
     setIsPending(true);
+    setError(null);
     try {
+      console.log("[PlotSwap] Approving", tokenAddress, "for Router", CONTRACTS.Router);
       const hash = await walletClient.writeContract({
         address: tokenAddress,
         abi: ERC20_ABI,
@@ -44,13 +66,16 @@ export function useTokenApproval(tokenAddress: `0x${string}` | undefined) {
         account: address,
         chain: walletClient.chain,
       });
+      console.log("[PlotSwap] Approval tx:", hash);
       await publicClient.waitForTransactionReceipt({ hash });
       setAllowance(maxUint256);
-    } catch (err) {
-      console.error("Approval failed:", err);
+      console.log("[PlotSwap] Approval confirmed");
+    } catch (err: any) {
+      console.error("[PlotSwap] Approval failed:", err);
+      setError(err?.shortMessage || err?.message || "Approval failed");
     }
     setIsPending(false);
-  }, [walletClient, address, tokenAddress, publicClient]);
+  }, [walletClient, address, tokenAddress, isNative, publicClient]);
 
-  return { allowance, approve, isPending };
+  return { allowance, approve, isPending, error, isNative };
 }

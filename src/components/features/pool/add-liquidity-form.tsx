@@ -98,6 +98,12 @@ export function AddLiquidityForm() {
       <div className="glass-card p-4 space-y-2">
         <h2 className="text-lg font-semibold mb-3">Add Liquidity</h2>
 
+        {(tokenA?.address === "0x0000000000000000000000000000000000000000" || tokenB?.address === "0x0000000000000000000000000000000000000000") && (
+          <div className="px-3 py-2 rounded-lg bg-plotswap-warning/10 border border-plotswap-warning/20 text-plotswap-warning text-xs">
+            Native IRL cannot be used directly in pools. Use WIRL (Wrapped IRL) instead.
+          </div>
+        )}
+
         {renderTokenInput("Token A", tokenA, amountAStr, setAmountAStr, balanceA, "a")}
 
         <div className="flex justify-center">
@@ -108,14 +114,14 @@ export function AddLiquidityForm() {
 
         {renderTokenInput("Token B", tokenB, amountBStr, setAmountBStr, balanceB, "b")}
 
-        {error && (
+        {(error || approvalA.error || approvalB.error) && (
           <div className="px-3 py-2 rounded-lg bg-plotswap-danger/10 border border-plotswap-danger/20 text-plotswap-danger text-xs">
-            {error}
+            {error || approvalA.error || approvalB.error}
           </div>
         )}
 
         <div className="pt-2 space-y-2">
-          {needsApprovalA && (
+          {needsApprovalA && !approvalA.isNative && (
             <button
               onClick={approvalA.approve}
               disabled={approvalA.isPending}
@@ -124,7 +130,7 @@ export function AddLiquidityForm() {
               {approvalA.isPending ? "Approving..." : `Approve ${tokenA!.symbol}`}
             </button>
           )}
-          {needsApprovalB && (
+          {needsApprovalB && !approvalB.isNative && (
             <button
               onClick={approvalB.approve}
               disabled={approvalB.isPending}
