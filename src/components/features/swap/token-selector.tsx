@@ -131,9 +131,9 @@ export function TokenSelector({
     customToken.address !== excludeAddress;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative glass-card-elevated w-full max-w-md p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md p-6 rounded-xl border border-plotswap-border-strong bg-[#13132B] shadow-2xl shadow-black/50">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Select a token</h3>
           <button

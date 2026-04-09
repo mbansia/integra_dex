@@ -84,9 +84,9 @@ export function ConnectModal({ isOpen, onClose }: ConnectModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative glass-card-elevated w-full max-w-sm p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-sm p-6 rounded-xl border border-plotswap-border-strong bg-[#13132B] shadow-2xl shadow-black/50">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold">Connect Wallet</h3>
           <button
