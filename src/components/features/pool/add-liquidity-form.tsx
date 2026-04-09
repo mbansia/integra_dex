@@ -7,6 +7,7 @@ import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { TokenSelector } from "@/components/features/swap/token-selector";
 import { ConnectModal } from "@/components/shared/connect-modal";
+import { WIRL_ABI } from "@/lib/abis/WIRL";
 import { formatTokenAmount, parseTokenAmount } from "@/lib/utils";
 import type { TokenInfo } from "@/lib/token-list";
 
@@ -18,7 +19,7 @@ function resolveAddr(addr: `0x${string}` | undefined): `0x${string}` | undefined
 }
 
 export function AddLiquidityForm() {
-  const { isConnected } = useWeb3();
+  const { isConnected, address, walletClient, publicClient } = useWeb3();
   const [showConnect, setShowConnect] = useState(false);
   const { addLiquidity, isPending, error, success } = useLiquidity();
 
@@ -27,6 +28,8 @@ export function AddLiquidityForm() {
   const [amountAStr, setAmountAStr] = useState("");
   const [amountBStr, setAmountBStr] = useState("");
   const [selectorFor, setSelectorFor] = useState<"a" | "b" | null>(null);
+  const [isWrapping, setIsWrapping] = useState(false);
+  const [wrapError, setWrapError] = useState<string | null>(null);
 
   const amountA = useMemo(
     () => parseTokenAmount(amountAStr, tokenA?.decimals ?? 18),
@@ -37,25 +40,61 @@ export function AddLiquidityForm() {
     [amountBStr, tokenB]
   );
 
-  // Resolve IRL → WIRL for balance and approval
+  const isNativeA = tokenA?.address === NATIVE;
+  const isNativeB = tokenB?.address === NATIVE;
+
+  // Show WIRL balance when IRL is selected (that's what the contract uses)
   const resolvedAddrA = resolveAddr(tokenA?.address);
   const resolvedAddrB = resolveAddr(tokenB?.address);
 
-  const balanceA = useTokenBalance(tokenA?.address);
-  const balanceB = useTokenBalance(tokenB?.address);
+  // For IRL: show native balance. For display we also fetch WIRL balance.
+  const nativeBalanceA = useTokenBalance(tokenA?.address);
+  const nativeBalanceB = useTokenBalance(tokenB?.address);
+  const wirlBalanceA = useTokenBalance(isNativeA ? WIRL_ADDR : undefined);
+  const wirlBalanceB = useTokenBalance(isNativeB ? WIRL_ADDR : undefined);
+
+  // Display balance: for IRL show native + WIRL available
+  const balanceA = isNativeA ? nativeBalanceA : nativeBalanceA;
+  const balanceB = isNativeB ? nativeBalanceB : nativeBalanceB;
+
   const approvalA = useTokenApproval(resolvedAddrA);
   const approvalB = useTokenApproval(resolvedAddrB);
 
-  const needsApprovalA = tokenA && amountA > 0n && !approvalA.isNative && approvalA.allowance < amountA;
-  const needsApprovalB = tokenB && amountB > 0n && !approvalB.isNative && approvalB.allowance < amountB;
+  // For native IRL: need to check WIRL balance, not just approval
+  const needsWrapA = isNativeA && amountA > 0n && wirlBalanceA < amountA;
+  const needsWrapB = isNativeB && amountB > 0n && wirlBalanceB < amountB;
+  const needsApprovalA = tokenA && amountA > 0n && !isNativeA && approvalA.allowance < amountA;
+  const needsApprovalB = tokenB && amountB > 0n && !isNativeB && approvalB.allowance < amountB;
+
+  const handleWrap = async (amount: bigint) => {
+    if (!walletClient || !address) return;
+    setIsWrapping(true);
+    setWrapError(null);
+    try {
+      console.log("[PlotSwap] Auto-wrapping IRL to WIRL:", amount.toString());
+      const hash = await walletClient.writeContract({
+        address: WIRL_ADDR,
+        abi: WIRL_ABI,
+        functionName: "deposit",
+        value: amount,
+        account: address,
+        chain: walletClient.chain,
+      });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === "reverted") {
+        setWrapError("Wrap failed on-chain");
+      } else {
+        console.log("[PlotSwap] Wrapped successfully");
+      }
+    } catch (err: any) {
+      setWrapError(err?.shortMessage || "Failed to wrap IRL");
+    }
+    setIsWrapping(false);
+  };
 
   const handleSubmit = async () => {
     if (!tokenA || !tokenB || amountA === 0n || amountB === 0n) return;
     await addLiquidity(tokenA.address, tokenB.address, amountA, amountB);
-    if (!error) {
-      setAmountAStr("");
-      setAmountBStr("");
-    }
   };
 
   const renderTokenInput = (
@@ -64,7 +103,9 @@ export function AddLiquidityForm() {
     amount: string,
     setAmount: (v: string) => void,
     balance: bigint,
-    side: "a" | "b"
+    side: "a" | "b",
+    isNative: boolean,
+    wirlBalance: bigint
   ) => (
     <div className="glass-card-elevated p-4">
       <div className="flex items-center justify-between mb-2">
@@ -72,6 +113,11 @@ export function AddLiquidityForm() {
         {token && (
           <span className="text-xs text-plotswap-text-muted">
             Balance: {formatTokenAmount(balance, token.decimals, 4)}
+            {isNative && (
+              <span className="ml-1 text-plotswap-text-subtle">
+                (WIRL: {formatTokenAmount(wirlBalance, 18, 4)})
+              </span>
+            )}
           </span>
         )}
       </div>
@@ -85,7 +131,7 @@ export function AddLiquidityForm() {
             const val = e.target.value.replace(/[^0-9.]/g, "");
             if (val.split(".").length <= 2) setAmount(val);
           }}
-          className="flex-1 bg-transparent text-xl font-mono outline-none placeholder-plotswap-text-subtle"
+          className="flex-1 bg-transparent text-xl font-mono outline-none text-plotswap-text placeholder-plotswap-text-subtle"
         />
         <button
           onClick={() => setSelectorFor(side)}
@@ -93,10 +139,10 @@ export function AddLiquidityForm() {
         >
           {token ? (
             <>
-              <div className="w-6 h-6 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary-light">
+              <div className="w-6 h-6 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary">
                 {token.symbol.slice(0, 2)}
               </div>
-              <span className="font-medium text-sm">{token.symbol}</span>
+              <span className="font-medium text-sm text-plotswap-text">{token.symbol}</span>
             </>
           ) : (
             <span className="text-sm text-plotswap-text-muted">Select</span>
@@ -109,9 +155,9 @@ export function AddLiquidityForm() {
   return (
     <div className="w-full max-w-[460px] mx-auto">
       <div className="glass-card p-4 space-y-2">
-        <h2 className="text-lg font-semibold mb-3">Add Liquidity</h2>
+        <h2 className="text-lg font-semibold text-plotswap-text mb-3">Add Liquidity</h2>
 
-        {renderTokenInput("Token A", tokenA, amountAStr, setAmountAStr, balanceA, "a")}
+        {renderTokenInput("Token A", tokenA, amountAStr, setAmountAStr, balanceA, "a", isNativeA, wirlBalanceA)}
 
         <div className="flex justify-center">
           <div className="w-8 h-8 rounded-lg bg-plotswap-bg border border-plotswap-border flex items-center justify-center text-plotswap-text-muted">
@@ -119,11 +165,11 @@ export function AddLiquidityForm() {
           </div>
         </div>
 
-        {renderTokenInput("Token B", tokenB, amountBStr, setAmountBStr, balanceB, "b")}
+        {renderTokenInput("Token B", tokenB, amountBStr, setAmountBStr, balanceB, "b", isNativeB, wirlBalanceB)}
 
-        {(error || approvalA.error || approvalB.error) && (
+        {(error || approvalA.error || approvalB.error || wrapError) && (
           <div className="px-3 py-2 rounded-lg bg-plotswap-danger/10 border border-plotswap-danger/20 text-plotswap-danger text-xs">
-            {error || approvalA.error || approvalB.error}
+            {wrapError || error || approvalA.error || approvalB.error}
           </div>
         )}
 
@@ -134,7 +180,28 @@ export function AddLiquidityForm() {
         )}
 
         <div className="pt-2 space-y-2">
-          {needsApprovalA && !approvalA.isNative && (
+          {/* Step 1: Wrap IRL if needed */}
+          {needsWrapA && (
+            <button
+              onClick={() => handleWrap(amountA - wirlBalanceA)}
+              disabled={isWrapping}
+              className="btn-primary w-full py-3 text-sm"
+            >
+              {isWrapping ? "Wrapping IRL..." : `Wrap ${formatTokenAmount(amountA - wirlBalanceA, 18, 4)} IRL → WIRL`}
+            </button>
+          )}
+          {needsWrapB && (
+            <button
+              onClick={() => handleWrap(amountB - wirlBalanceB)}
+              disabled={isWrapping}
+              className="btn-primary w-full py-3 text-sm"
+            >
+              {isWrapping ? "Wrapping IRL..." : `Wrap ${formatTokenAmount(amountB - wirlBalanceB, 18, 4)} IRL → WIRL`}
+            </button>
+          )}
+
+          {/* Step 2: Approve tokens */}
+          {!needsWrapA && !needsWrapB && needsApprovalA && (
             <button
               onClick={approvalA.approve}
               disabled={approvalA.isPending}
@@ -143,7 +210,7 @@ export function AddLiquidityForm() {
               {approvalA.isPending ? "Approving..." : `Approve ${tokenA!.symbol}`}
             </button>
           )}
-          {needsApprovalB && !approvalB.isNative && (
+          {!needsWrapA && !needsWrapB && needsApprovalB && (
             <button
               onClick={approvalB.approve}
               disabled={approvalB.isPending}
@@ -152,6 +219,8 @@ export function AddLiquidityForm() {
               {approvalB.isPending ? "Approving..." : `Approve ${tokenB!.symbol}`}
             </button>
           )}
+
+          {/* Step 3: Supply */}
           {!isConnected ? (
             <>
               <button onClick={() => setShowConnect(true)} className="btn-primary w-full py-3">
@@ -168,6 +237,9 @@ export function AddLiquidityForm() {
                 amountA === 0n ||
                 amountB === 0n ||
                 isPending ||
+                isWrapping ||
+                !!needsWrapA ||
+                !!needsWrapB ||
                 !!needsApprovalA ||
                 !!needsApprovalB
               }
@@ -186,9 +258,7 @@ export function AddLiquidityForm() {
           if (selectorFor === "a") setTokenA(token);
           else setTokenB(token);
         }}
-        excludeAddress={
-          selectorFor === "a" ? tokenB?.address : tokenA?.address
-        }
+        excludeAddress={selectorFor === "a" ? tokenB?.address : tokenA?.address}
       />
     </div>
   );
