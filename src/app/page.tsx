@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { PixelMascot } from "@/components/shared/pixel-mascot";
 
 export default function HomePage() {
   return (
@@ -127,8 +130,13 @@ export default function HomePage() {
           </Link>
         </div>
 
+        {/* Mascot */}
+        <div className="mt-16 animate-fade-up-delay-2">
+          <PixelMascot size={120} />
+        </div>
+
         {/* Features */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full mt-20 animate-fade-up-delay-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full mt-12 animate-fade-up-delay-2">
           {[
             {
               title: "AMM Powered",
