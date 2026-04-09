@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { AddLiquidityForm } from "@/components/features/pool/add-liquidity-form";
+import { ExistingPools } from "@/components/features/pool/existing-pools";
 import { cn } from "@/lib/utils";
 
 export default function PoolPage() {
   const [tab, setTab] = useState<"add" | "positions">("add");
 
   return (
-    <div className="flex flex-col items-center min-h-[calc(100vh-8rem)] pt-12 px-4">
+    <div className="flex flex-col items-center min-h-[calc(100vh-8rem)] pt-12 px-4 pb-20">
       <div className="w-full max-w-[460px]">
         <div className="flex gap-1 mb-6 glass-card p-1">
           <button
@@ -48,6 +49,9 @@ export default function PoolPage() {
           </div>
         )}
       </div>
+
+      {/* Existing pools below */}
+      <ExistingPools />
     </div>
   );
 }
