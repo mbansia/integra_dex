@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AddLiquidityForm } from "@/components/features/pool/add-liquidity-form";
+import { UserPositions } from "@/components/features/pool/user-positions";
 import { ExistingPools } from "@/components/features/pool/existing-pools";
 import { cn } from "@/lib/utils";
 
@@ -39,14 +40,7 @@ export default function PoolPage() {
         {tab === "add" ? (
           <AddLiquidityForm />
         ) : (
-          <div className="glass-card p-8 text-center">
-            <div className="text-plotswap-text-muted text-sm mb-2">
-              Connect your wallet to view positions
-            </div>
-            <p className="text-xs text-plotswap-text-subtle">
-              Your active liquidity positions will appear here
-            </p>
-          </div>
+          <UserPositions />
         )}
       </div>
 

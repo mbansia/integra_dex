@@ -16,11 +16,7 @@ import {
   calculatePriceImpact,
 } from "@/lib/utils";
 import { CONTRACTS } from "@/lib/contracts";
-import { WIRL_ABI } from "@/lib/abis/WIRL";
 import type { TokenInfo } from "@/lib/token-list";
-
-const NATIVE = "0x0000000000000000000000000000000000000000" as `0x${string}`;
-const WIRL_TOKEN: TokenInfo = { address: "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34", name: "Wrapped IRL", symbol: "WIRL", decimals: 18, logoURI: "", isERC1404: false };
 
 export function SwapCard() {
   const { isConnected } = useWeb3();
@@ -34,9 +30,6 @@ export function SwapCard() {
   const [selectorFor, setSelectorFor] = useState<"in" | "out" | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
-  const [showWrap, setShowWrap] = useState(false);
-  const [wrapAmount, setWrapAmount] = useState("");
-  const [isWrapping, setIsWrapping] = useState(false);
 
   const amountIn = useMemo(
     () => parseTokenAmount(amountInStr, tokenIn?.decimals ?? 18),
@@ -307,90 +300,8 @@ export function SwapCard() {
           else setTokenOut(token);
         }}
         excludeAddress={selectorFor === "in" ? tokenOut?.address : tokenIn?.address}
-        onWrapIRL={() => {
-          setSelectorFor(null);
-          setShowWrap(true);
-        }}
-      />
-
-      {/* Inline Wrap IRL Flow */}
-      <WrapInlineModal
-        isOpen={showWrap}
-        onClose={() => setShowWrap(false)}
-        onWrapped={() => {
-          setShowWrap(false);
-          // Auto-select WIRL after wrapping
-          if (selectorFor === "in" || !tokenIn) setTokenIn(WIRL_TOKEN);
-          else setTokenOut(WIRL_TOKEN);
-        }}
       />
     </div>
   );
 }
 
-function WrapInlineModal({ isOpen, onClose, onWrapped }: { isOpen: boolean; onClose: () => void; onWrapped: () => void }) {
-  const { address, walletClient, publicClient, isConnected } = useWeb3();
-  const [amount, setAmount] = useState("");
-  const [isPending, setIsPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const irlBalance = useTokenBalance("0x0000000000000000000000000000000000000000" as `0x${string}`);
-
-  if (!isOpen) return null;
-
-  const parsedAmount = (() => { try { return BigInt(Math.floor(parseFloat(amount || "0") * 1e18)); } catch { return 0n; } })();
-
-  const handleWrap = async () => {
-    if (!walletClient || !address || parsedAmount === 0n) return;
-    setIsPending(true);
-    setError(null);
-    try {
-      const hash = await walletClient.writeContract({
-        address: "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34" as `0x${string}`,
-        abi: WIRL_ABI,
-        functionName: "deposit",
-        value: parsedAmount,
-        account: address,
-        chain: walletClient.chain,
-      });
-      await publicClient.waitForTransactionReceipt({ hash });
-      onWrapped();
-    } catch (err: any) {
-      setError(err?.shortMessage || "Wrap failed");
-    }
-    setIsPending(false);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm p-6 rounded-xl border shadow-2xl" style={{ background: "var(--ps-card-elevated)", borderColor: "var(--ps-border-strong)", zIndex: 10000 }}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-plotswap-text">Wrap IRL to WIRL</h3>
-          <button onClick={onClose} className="text-plotswap-text-muted hover:text-plotswap-text text-xl">&times;</button>
-        </div>
-        <p className="text-xs text-plotswap-text-muted mb-4">
-          WIRL is the wrapped version of IRL used for trading. Wrap some IRL first, then it will be auto-selected for your swap.
-        </p>
-        <div className="glass-card p-3 mb-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-plotswap-text-muted">IRL Balance</span>
-            <button onClick={() => setAmount(formatTokenAmount(irlBalance, 18, 18))} className="text-xs text-plotswap-primary">MAX</button>
-          </div>
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="0.0"
-            value={amount}
-            onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ""); if (v.split(".").length <= 2) setAmount(v); }}
-            className="w-full bg-transparent text-xl font-mono outline-none text-plotswap-text placeholder-plotswap-text-subtle"
-          />
-        </div>
-        <p className="text-[11px] text-plotswap-text-subtle mb-4 text-center">1 IRL = 1 WIRL (always 1:1)</p>
-        {error && <div className="mb-3 px-3 py-2 rounded-lg bg-plotswap-danger/10 border border-plotswap-danger/20 text-plotswap-danger text-xs">{error}</div>}
-        <button onClick={handleWrap} disabled={isPending || parsedAmount === 0n} className="btn-primary w-full py-3 text-sm">
-          {isPending ? "Wrapping..." : "Wrap IRL → WIRL"}
-        </button>
-      </div>
-    </div>
-  );
-}

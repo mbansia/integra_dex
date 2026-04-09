@@ -17,22 +17,14 @@ interface TokenSelectorProps {
   onClose: () => void;
   onSelect: (token: TokenInfo) => void;
   excludeAddress?: `0x${string}`;
-  onWrapIRL?: () => void;
 }
 
-function TokenRow({ token, onSelect, onWrapIRL }: { token: TokenInfo; onSelect: () => void; onWrapIRL?: () => void }) {
+function TokenRow({ token, onSelect }: { token: TokenInfo; onSelect: () => void }) {
   const balance = useTokenBalance(token.address);
-  const isNative = token.address === NATIVE;
 
   return (
     <button
-      onClick={() => {
-        if (isNative && onWrapIRL) {
-          onWrapIRL();
-        } else {
-          onSelect();
-        }
-      }}
+      onClick={onSelect}
       className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-plotswap-primary/10 transition-colors"
     >
       <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-xs font-bold text-plotswap-primary">
@@ -46,9 +38,6 @@ function TokenRow({ token, onSelect, onWrapIRL }: { token: TokenInfo; onSelect: 
         <div className="text-xs font-mono text-plotswap-text">
           {formatTokenAmount(balance, token.decimals, 4)}
         </div>
-        {isNative && onWrapIRL && (
-          <div className="text-[10px] text-plotswap-primary">Tap to wrap</div>
-        )}
       </div>
       {token.isERC1404 && (
         <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-plotswap-warning/15 text-plotswap-warning border border-plotswap-warning/20">
@@ -64,7 +53,6 @@ export function TokenSelector({
   onClose,
   onSelect,
   excludeAddress,
-  onWrapIRL,
 }: TokenSelectorProps) {
   const [search, setSearch] = useState("");
   const [customToken, setCustomToken] = useState<TokenInfo | null>(null);
@@ -161,7 +149,6 @@ export function TokenSelector({
                 key={token.address}
                 token={token}
                 onSelect={() => { onSelect(token); onClose(); setSearch(""); }}
-                onWrapIRL={onWrapIRL}
               />
             ))
           ) : !showCustom && !isLoadingCustom ? (
