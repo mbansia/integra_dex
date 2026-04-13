@@ -1,3 +1,83 @@
+"use client";
+
+import { useState } from "react";
+import allAbis from "@/lib/abis/all-abis.json";
+
+const CONTRACTS = [
+  {
+    name: "PlotswapFactory",
+    address: "0x5a9E1b7634F36f5E8752160c018e1cF1e8ED5C1d",
+    description: "Creates and tracks all trading pairs. Deploys new Pair contracts on demand.",
+  },
+  {
+    name: "PlotswapRouter",
+    address: "0xF859054CF3CF679462aaDc188956d403Ed9D7990",
+    description: "User-facing contract for swaps and liquidity. Handles ERC-1404 compliance checks and XP emission.",
+  },
+  {
+    name: "PlotswapPair",
+    address: "—",
+    description: "AMM pool contract (x*y=k). Deployed per token pair by the Factory.",
+  },
+  {
+    name: "WIRL",
+    address: "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34",
+    description: "Wrapped IRL (WETH-style). Deposit native IRL to mint WIRL, withdraw to unwrap.",
+  },
+];
+
+function CopyButton({ text, label }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      className="text-xs font-medium text-plotswap-primary hover:text-plotswap-primary-hover transition-colors"
+    >
+      {copied ? "Copied!" : label || "Copy"}
+    </button>
+  );
+}
+
+function AbiSection({ name, abi }: { name: string; abi: any[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const abiJson = JSON.stringify(abi, null, 2);
+
+  return (
+    <div className="glass-card p-4 mb-3">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-2 text-sm font-semibold text-plotswap-text hover:text-plotswap-primary transition-colors"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            className={`transition-transform ${expanded ? "rotate-90" : ""}`}
+          >
+            <path d="M5 3l5 4-5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {name}
+          <span className="text-xs text-plotswap-text-muted font-normal">
+            ({abi.length} functions/events)
+          </span>
+        </button>
+        <CopyButton text={abiJson} label="Copy ABI" />
+      </div>
+      {expanded && (
+        <pre className="mt-4 p-3 rounded-lg bg-plotswap-bg border border-plotswap-border text-[10px] font-mono overflow-x-auto max-h-80 overflow-y-auto text-plotswap-text-muted">
+          {abiJson}
+        </pre>
+      )}
+    </div>
+  );
+}
+
 export default function DocsPage() {
   const sections = [
     {
@@ -54,7 +134,7 @@ export default function DocsPage() {
   return (
     <div className="max-w-3xl mx-auto pt-12 px-4 pb-20">
       <h1 className="text-3xl font-bold text-plotswap-text mb-2">Documentation</h1>
-      <p className="text-plotswap-text-muted mb-10">Everything you need to know about using PlotSwap.</p>
+      <p className="text-plotswap-text-muted mb-10">Everything you need to know about using and building on PlotSwap.</p>
 
       <div className="space-y-10">
         {sections.map((section) => (
@@ -75,6 +155,43 @@ export default function DocsPage() {
             </div>
           </div>
         ))}
+
+        {/* Contract Addresses */}
+        <div id="contracts">
+          <h2 className="text-lg font-semibold text-plotswap-text mb-4 flex items-center gap-2">
+            <div className="w-1 h-5 rounded-full bg-plotswap-primary" />
+            Contract Addresses
+          </h2>
+          <p className="text-xs text-plotswap-text-muted mb-4">Chain ID: 26218</p>
+          <div className="space-y-3">
+            {CONTRACTS.map((c) => (
+              <div key={c.name} className="glass-card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-plotswap-text">{c.name}</h3>
+                  {c.address !== "—" && <CopyButton text={c.address} />}
+                </div>
+                <div className="font-mono text-xs text-plotswap-text-muted mb-2 break-all">
+                  {c.address}
+                </div>
+                <p className="text-xs text-plotswap-text-muted">{c.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ABIs */}
+        <div id="abis">
+          <h2 className="text-lg font-semibold text-plotswap-text mb-4 flex items-center gap-2">
+            <div className="w-1 h-5 rounded-full bg-plotswap-primary" />
+            Contract ABIs
+          </h2>
+          <p className="text-xs text-plotswap-text-muted mb-4">
+            Click to expand, or use Copy ABI to grab the full JSON.
+          </p>
+          {Object.entries(allAbis as Record<string, any[]>).map(([name, abi]) => (
+            <AbiSection key={name} name={name} abi={abi} />
+          ))}
+        </div>
       </div>
     </div>
   );
