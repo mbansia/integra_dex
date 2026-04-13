@@ -3,9 +3,9 @@ export default function DocsPage() {
     {
       title: "Getting Started",
       items: [
-        { q: "What is PlotSwap?", a: "PlotSwap is a decentralized exchange (DEX) built on the Integra Testnet. It uses an automated market maker (AMM) model — the same approach as Uniswap — to enable instant token swaps without order books." },
-        { q: "How do I connect?", a: "Click 'Connect Wallet' and select your browser wallet (MetaMask, Rabby, etc.). PlotSwap will automatically add the Integra Testnet to your wallet if it's not already configured." },
-        { q: "How do I get test tokens?", a: "Visit the Integra faucet at docs.integralayer.com/tools to claim free IRL (the native token). Then use the Wrap page to convert IRL to WIRL for trading." },
+        { q: "What is PlotSwap?", a: "PlotSwap is a decentralized exchange (DEX) for tokenized real-world assets. It uses an automated market maker (AMM) model — the same approach as Uniswap — to enable instant token swaps without order books." },
+        { q: "How do I connect?", a: "Click 'Connect Wallet' and select your browser wallet (MetaMask, Rabby, etc.). PlotSwap will automatically add the correct network to your wallet if it's not already configured." },
+        { q: "How do I get test tokens?", a: "Use the Wrap page to convert your native gas token (IRL) to WIRL for trading. Most tokens are pre-listed — you can also add any token by pasting its contract address." },
       ],
     },
     {
@@ -29,7 +29,7 @@ export default function DocsPage() {
     {
       title: "IRL & WIRL",
       items: [
-        { q: "What is IRL?", a: "IRL is the native token of the Integra blockchain, used for gas fees — similar to ETH on Ethereum." },
+        { q: "What is IRL?", a: "IRL is the native gas token of the network — used for transaction fees, similar to ETH on Ethereum." },
         { q: "What is WIRL?", a: "WIRL (Wrapped IRL) is an ERC-20 version of the native IRL token. Since AMM contracts require ERC-20 tokens, you need to wrap your IRL before trading. It's always 1:1." },
         { q: "How do I wrap IRL?", a: "Go to the Wrap page in the navigation. Enter the amount of IRL you want to wrap and click 'Wrap'. You can unwrap back to IRL at any time." },
       ],
@@ -45,16 +45,8 @@ export default function DocsPage() {
     {
       title: "XP & Rewards",
       items: [
-        { q: "What is XP?", a: "Every swap and liquidity action emits an XPAction event on-chain. XP is tracked across the entire Integra ecosystem for rewards, reputation, and potential airdrops." },
+        { q: "What is XP?", a: "Every swap and liquidity action emits an XPAction event on-chain. XP tracks activity for rewards, reputation, and potential airdrops." },
         { q: "How much XP do I earn?", a: "First swap: 200 XP. Subsequent swaps: 100 XP. Adding liquidity: 150 XP. Removing liquidity: 50 XP." },
-      ],
-    },
-    {
-      title: "Contracts",
-      items: [
-        { q: "Factory", a: "0x5a9E1b7634F36f5E8752160c018e1cF1e8ED5C1d — Creates and tracks all trading pairs." },
-        { q: "Router", a: "0xF859054CF3CF679462aaDc188956d403Ed9D7990 — User-facing contract for swaps and liquidity. Handles ERC-1404 compliance checks and XP emission." },
-        { q: "WIRL", a: "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34 — Wrapped IRL (WETH-style). Deposit native IRL to get WIRL, withdraw to get IRL back." },
       ],
     },
   ];
@@ -75,14 +67,8 @@ export default function DocsPage() {
               {section.items.map((item) => (
                 <div key={item.q} className="glass-card p-4">
                   <h3 className="text-sm font-semibold text-plotswap-text mb-1.5">{item.q}</h3>
-                  <p className="text-sm text-plotswap-text-muted leading-relaxed font-mono" style={{ fontFamily: item.a.startsWith("0x") ? undefined : "inherit" }}>
-                    {item.a.startsWith("0x") ? (
-                      <a href={`https://explorer.integralayer.com/address/${item.a.split(" ")[0]}`} target="_blank" rel="noopener noreferrer" className="text-plotswap-primary hover:text-plotswap-primary-hover break-all">
-                        {item.a}
-                      </a>
-                    ) : (
-                      <span style={{ fontFamily: "inherit" }}>{item.a}</span>
-                    )}
+                  <p className="text-sm text-plotswap-text-muted leading-relaxed">
+                    {item.a}
                   </p>
                 </div>
               ))}

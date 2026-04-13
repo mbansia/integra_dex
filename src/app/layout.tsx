@@ -6,9 +6,9 @@ import { Web3Provider } from "@/providers/web3-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PlotSwap | DEX on Integra",
+  title: "PlotSwap | DEX for Tokenized Real Estate",
   description:
-    "Trade ERC-20 and ERC-1404 tokens on Integra Testnet. Powered by an automated market maker.",
+    "Swap ERC-20 and ERC-1404 tokens with automated liquidity. Built for real-world assets.",
 };
 
 export default function RootLayout({

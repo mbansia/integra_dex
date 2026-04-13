@@ -60,15 +60,6 @@ export function ConnectButton() {
             >
               Copy Address
             </button>
-            <a
-              href={`https://explorer.integralayer.com/address/${address}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block px-3 py-2 text-sm rounded-md hover:bg-plotswap-primary/10 transition-colors"
-              onClick={() => setShowMenu(false)}
-            >
-              View on Explorer
-            </a>
             <button
               onClick={() => {
                 disconnect();

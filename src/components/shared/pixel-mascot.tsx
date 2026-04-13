@@ -166,16 +166,16 @@ interface FAQ {
 }
 
 const FAQS: FAQ[] = [
-  { q: "What is PlotSwap?", a: "PlotSwap is a decentralized exchange (DEX) on Integra Testnet. It uses an automated market maker (AMM) to let you swap tokens instantly without an order book." },
-  { q: "How do I swap tokens?", a: "Connect your wallet, select the tokens you want to trade, enter an amount, and click Swap. You'll need IRL (the native token) for gas fees." },
+  { q: "What is PlotSwap?", a: "PlotSwap is a decentralized exchange (DEX) for tokenized real-world assets. It uses an automated market maker (AMM) to let you swap tokens instantly without an order book." },
+  { q: "How do I swap tokens?", a: "Connect your wallet, select the tokens you want to trade, enter an amount, and click Swap. You'll need IRL (the native gas token) for transaction fees." },
   { q: "What are ERC-1404 tokens?", a: "ERC-1404 is a security token standard with built-in transfer restrictions. PlotSwap checks whitelist compliance before every trade — if you're not approved, the swap is blocked before it reaches your wallet." },
-  { q: "How do I get testnet IRL?", a: "Visit the Integra faucet at docs.integralayer.com/tools to get free testnet IRL tokens for testing." },
+  { q: "How do I get test tokens?", a: "Wrap some IRL to WIRL via the Wrap page, or paste any token contract address in the token selector to add it." },
   { q: "What is a liquidity pool?", a: "A pool holds two tokens and lets traders swap between them. When you add liquidity, you deposit both tokens and earn 0.25% of every swap fee in return." },
   { q: "What's the swap fee?", a: "0.3% per trade — 0.25% goes to liquidity providers and 0.05% is an optional protocol fee." },
   { q: "How does the whitelist check work?", a: "For ERC-1404 tokens, PlotSwap calls detectTransferRestriction() before sending the transaction to your wallet. If you're not on the token's whitelist, you'll see the exact restriction reason in the UI." },
   { q: "What wallets are supported?", a: "Any browser wallet like MetaMask, Rabby, or Coinbase Wallet. Social login via Web3Auth (Google, Email, etc.) is coming soon." },
-  { q: "Is this real money?", a: "No! PlotSwap is on Integra Testnet. All tokens are test tokens with no real value. It's a sandbox for trying out DeFi." },
-  { q: "What is XP?", a: "Every swap and liquidity action emits an XP event on-chain. XP is tracked across the Integra ecosystem for rewards and reputation." },
+  { q: "Is this real money?", a: "Currently running on testnet — all tokens are test tokens with no real value. It's a sandbox for trying out DeFi." },
+  { q: "What is XP?", a: "Every swap and liquidity action emits an XP event on-chain. XP tracks your activity for rewards, reputation, and potential airdrops." },
 ];
 
 function renderFrame(frame: number[][], px: number) {

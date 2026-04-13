@@ -177,14 +177,9 @@ export function ExistingPools({ onManage }: { onManage?: () => void }) {
                       <div className="font-semibold text-sm text-plotswap-text">
                         {pool.token0.symbol} / {pool.token1.symbol}
                       </div>
-                      <a
-                        href={`https://explorer.integralayer.com/address/${pool.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-plotswap-primary font-mono hover:text-plotswap-primary-hover"
-                      >
+                      <span className="text-[10px] text-plotswap-text-subtle font-mono">
                         {pool.address.slice(0, 8)}...{pool.address.slice(-6)}
-                      </a>
+                      </span>
                     </div>
                   </div>
 

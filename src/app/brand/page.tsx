@@ -52,7 +52,7 @@ export default function BrandPage() {
       <p className="text-plotswap-text-muted mb-10">Colors, logos, and guidelines for PlotSwap.</p>
 
       {/* Logo */}
-      <section className="mb-12">
+      <section className="mb-12" id="logo">
         <h2 className="text-lg font-semibold text-plotswap-text mb-4">Logo</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="glass-card p-8 flex flex-col items-center gap-4" style={{ background: "#080C16" }}>

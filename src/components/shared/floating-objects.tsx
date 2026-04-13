@@ -41,8 +41,8 @@ const ICONS: { name: string; path: string }[] = [
   { name: "crane", path: "M10 22V6M6 22h8M10 6l8-4M10 6l-6-2M18 2v8M16 4h4M10 10h6M10 14h4" },
   // Cactus (funny housewarming)
   { name: "cactus", path: "M12 22V6M12 6c0-2-3-4-3-4M12 10c0-2 3-4 3-4M9 6v6M15 10v4M10 22h4" },
-  // Satellite dish
-  { name: "satellite", path: "M4 20L20 4M8 16l2 2M12 12l2 2M16 8l2 2M2 22a20 20 0 0120-20" },
+  // Mailbox
+  { name: "mailbox", path: "M4 12a4 4 0 018 0v8M4 12h12a4 4 0 014 4v4H4v-8zM16 12V8h-4M8 16h4M6 6v4" },
   // Swimming pool
   { name: "pool", path: "M2 16c1.5-1.5 3-1.5 4.5 0s3 1.5 4.5 0 3-1.5 4.5 0 3 1.5 4.5 0M2 20c1.5-1.5 3-1.5 4.5 0s3 1.5 4.5 0 3-1.5 4.5 0 3 1.5 4.5 0M4 8h16v6H4V8zM8 8V6M16 8V6" },
   // Palm tree
@@ -61,7 +61,7 @@ function createObject(id: number, canvasW: number, canvasH: number): FloatingObj
     rotationSpeed: (Math.random() - 0.5) * 0.4,
     size: 36 + Math.random() * 28,
     icon: icon.path,
-    opacity: 0.17 + Math.random() * 0.14,
+    opacity: 0.08 + Math.random() * 0.07,
   };
 }
 

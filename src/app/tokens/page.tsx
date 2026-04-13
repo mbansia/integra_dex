@@ -166,14 +166,9 @@ export default function TokensPage() {
                     {token.symbol}
                   </td>
                   <td className="py-4 px-4">
-                    <a
-                      href={`https://explorer.integralayer.com/address/${token.address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-mono text-blue-400 hover:text-blue-300 transition-colors"
-                    >
+                    <span className="text-sm font-mono text-plotswap-text-muted">
                       {shortenAddress(token.address)}
-                    </a>
+                    </span>
                   </td>
                   <td className="py-4 px-4">
                     {token.isERC1404 ? (

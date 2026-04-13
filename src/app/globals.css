@@ -3,34 +3,34 @@
 @tailwind utilities;
 
 @layer base {
-  /* Dark mode (default) */
+  /* Dark mode (default) — solid colors, no transparency */
   html, html.dark, html:not(.light) {
     --ps-bg: #080C16;
-    --ps-card: rgba(12, 18, 35, 0.85);
-    --ps-card-elevated: rgba(16, 24, 48, 0.9);
-    --ps-border: rgba(59, 130, 246, 0.10);
-    --ps-border-strong: rgba(59, 130, 246, 0.25);
+    --ps-card: #0F1525;
+    --ps-card-elevated: #141B30;
+    --ps-border: rgba(59, 130, 246, 0.15);
+    --ps-border-strong: rgba(59, 130, 246, 0.30);
     --ps-text: #E8E8F0;
     --ps-text-muted: #9CA3AF;
     --ps-text-subtle: #6B7280;
-    --ps-input-bg: rgba(12, 18, 35, 0.6);
-    --ps-hover-bg: rgba(255, 255, 255, 0.05);
-    --ps-feature-card: rgba(10, 14, 26, 0.8);
+    --ps-input-bg: #0B1020;
+    --ps-hover-bg: rgba(59, 130, 246, 0.08);
+    --ps-feature-card: #0F1525;
   }
 
-  /* Light mode */
+  /* Light mode — solid colors */
   html.light {
     --ps-bg: #F0F4FA;
-    --ps-card: rgba(255, 255, 255, 0.9);
-    --ps-card-elevated: rgba(255, 255, 255, 0.97);
-    --ps-border: rgba(59, 130, 246, 0.15);
-    --ps-border-strong: rgba(59, 130, 246, 0.30);
+    --ps-card: #FFFFFF;
+    --ps-card-elevated: #FFFFFF;
+    --ps-border: rgba(59, 130, 246, 0.18);
+    --ps-border-strong: rgba(59, 130, 246, 0.35);
     --ps-text: #0F172A;
     --ps-text-muted: #475569;
     --ps-text-subtle: #94A3B8;
-    --ps-input-bg: rgba(255, 255, 255, 0.8);
+    --ps-input-bg: #F8FAFC;
     --ps-hover-bg: rgba(59, 130, 246, 0.05);
-    --ps-feature-card: rgba(255, 255, 255, 0.85);
+    --ps-feature-card: #FFFFFF;
   }
 
   * {
@@ -53,16 +53,18 @@
 @layer components {
   .glass-card {
     background: var(--ps-card);
-    backdrop-filter: blur(12px);
     border: 1px solid var(--ps-border);
     border-radius: 0.75rem;
+    position: relative;
+    z-index: 10;
   }
 
   .glass-card-elevated {
     background: var(--ps-card-elevated);
-    backdrop-filter: blur(16px);
     border: 1px solid var(--ps-border-strong);
     border-radius: 0.75rem;
+    position: relative;
+    z-index: 10;
   }
 
   html.light .glass-card,

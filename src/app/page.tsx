@@ -56,8 +56,8 @@ export default function HomePage() {
         <div className="animate-fade-up mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-plotswap-primary/20 bg-plotswap-primary/5">
             <div className="w-1.5 h-1.5 rounded-full bg-plotswap-success animate-pulse" />
-            <span className="text-xs font-medium text-plotswap-primary-light">
-              Live on Integra Testnet
+            <span className="text-xs font-medium text-plotswap-primary">
+              The DEX for tokenized real estate
             </span>
           </div>
         </div>
@@ -78,14 +78,14 @@ export default function HomePage() {
               Trade tokens
             </span>
             <br />
-            <span className="text-plotswap-text">on Integra</span>
+            <span className="text-plotswap-text">on PlotSwap</span>
           </h1>
         </div>
 
         <p className="text-lg sm:text-xl text-plotswap-text-muted mb-10 max-w-lg mx-auto text-center animate-fade-up-delay leading-relaxed">
           Swap ERC-20 and ERC-1404 tokens with automated liquidity.
           <br className="hidden sm:block" />
-          <span className="text-plotswap-text">Instant. Fluid. Made for Integra.</span>
+          <span className="text-plotswap-text">Instant. Fluid. Built for real-world assets.</span>
         </p>
 
         {/* CTA Buttons */}
@@ -142,7 +142,7 @@ export default function HomePage() {
             },
             {
               title: "Earn XP",
-              desc: "Every swap and liquidity action earns XP on the Integra network ecosystem.",
+              desc: "Every swap and liquidity action earns XP toward rewards and reputation.",
               color: "#F59E0B",
               icon: (
                 <>
@@ -180,13 +180,10 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Powered by */}
+        {/* Tagline */}
         <div className="mt-20 flex items-center gap-3 text-xs text-plotswap-text-subtle animate-fade-up-delay-3">
           <div className="h-px w-12 bg-gradient-to-r from-transparent to-plotswap-border" />
-          <span>Powered by</span>
-          <span className="font-medium text-plotswap-text-muted">
-            Integra Layer
-          </span>
+          <span>PlotSwap.markets</span>
           <div className="h-px w-12 bg-gradient-to-l from-transparent to-plotswap-border" />
         </div>
       </div>
