@@ -122,13 +122,6 @@ export default function DocsPage() {
         { q: "How do I get whitelisted?", a: "Contact the token issuer directly. Whitelisting is managed at the token contract level, not by PlotSwap." },
       ],
     },
-    {
-      title: "XP & Rewards",
-      items: [
-        { q: "What is XP?", a: "Every swap and liquidity action emits an XPAction event on-chain. XP tracks activity for rewards, reputation, and potential airdrops." },
-        { q: "How much XP do I earn?", a: "First swap: 200 XP. Subsequent swaps: 100 XP. Adding liquidity: 150 XP. Removing liquidity: 50 XP." },
-      ],
-    },
   ];
 
   return (
