@@ -247,11 +247,20 @@ export function SwapCard() {
               <span className="text-plotswap-text-muted">Rate</span>
               <span className="font-mono text-plotswap-text">
                 1 {tokenIn.symbol} ={" "}
-                {amountIn > 0n ? (Number(amountOut) / Number(amountIn)).toFixed(6) : "—"}{" "}
+                {amountIn > 0n
+                  ? (
+                      (Number(amountOut) / Math.pow(10, tokenOut.decimals)) /
+                      (Number(amountIn) / Math.pow(10, tokenIn.decimals))
+                    ).toFixed(6)
+                  : "—"}{" "}
                 {tokenOut.symbol}
               </span>
             </div>
             <PriceImpact impact={priceImpact} />
+            <div className="flex justify-between text-xs">
+              <span className="text-plotswap-text-muted">Slippage Tolerance</span>
+              <span className="font-mono text-plotswap-text">{slippage}%</span>
+            </div>
             <div className="flex justify-between text-xs">
               <span className="text-plotswap-text-muted">Minimum received</span>
               <span className="font-mono text-plotswap-text">
@@ -263,8 +272,15 @@ export function SwapCard() {
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-plotswap-text-muted">LP Fee</span>
-              <span className="font-mono text-plotswap-text">0.3%</span>
+              <span className="text-plotswap-text-muted">LP Fee (0.3%)</span>
+              <span className="font-mono text-plotswap-text">
+                {formatTokenAmount(
+                  (amountIn * 3n) / 1000n,
+                  tokenIn.decimals,
+                  6
+                )}{" "}
+                {tokenIn.symbol}
+              </span>
             </div>
           </div>
         )}

@@ -44,11 +44,25 @@ export function calculatePriceImpact(
   reserveIn: bigint,
   reserveOut: bigint
 ): number {
-  if (reserveIn === 0n || reserveOut === 0n) return 0;
-  const spotPrice = Number(reserveOut) / Number(reserveIn);
-  const executionPrice = Number(amountOut) / Number(amountIn);
+  if (reserveIn === 0n || reserveOut === 0n || amountIn === 0n) return 0;
+
+  // Spot price: what 1 unit of tokenIn would get you at the current reserve ratio
+  // Execution price: what you actually got
+  // Impact = (spotPrice - executionPrice) / spotPrice * 100
+
+  // Use floating point with decimals normalized out (both are raw amounts,
+  // decimal differences cancel in the ratio)
+  const rIn = Number(reserveIn);
+  const rOut = Number(reserveOut);
+  const aIn = Number(amountIn);
+  const aOut = Number(amountOut);
+
+  if (rIn === 0 || aIn === 0) return 0;
+
+  const spotPrice = rOut / rIn;
+  const executionPrice = aOut / aIn;
   const impact = ((spotPrice - executionPrice) / spotPrice) * 100;
-  return Math.max(0, impact);
+  return Math.max(0, Math.min(100, impact));
 }
 
 export function calculateMinimumReceived(

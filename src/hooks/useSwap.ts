@@ -83,7 +83,42 @@ export function useSwap(
       setError(null);
       try {
         const minOut = calculateMinimumReceived(amountOut, slippageBps);
-        const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200); // 20 min
+        const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
+
+        console.log("[PlotSwap] Swap:", {
+          amountIn: amountIn.toString(),
+          amountOut: amountOut.toString(),
+          minOut: minOut.toString(),
+          slippageBps,
+          path: [effectiveIn, effectiveOut],
+        });
+
+        // Pre-flight simulate to catch revert reason
+        try {
+          await publicClient.simulateContract({
+            address: CONTRACTS.Router,
+            abi: ROUTER_ABI,
+            functionName: "swapExactTokensForTokens",
+            args: [amountIn, minOut, [effectiveIn, effectiveOut], address, deadline],
+            account: address,
+          });
+        } catch (simErr: any) {
+          console.error("[PlotSwap] Swap simulation failed:", simErr);
+          const reason = simErr?.shortMessage || simErr?.message || "Unknown";
+          if (reason.includes("InsufficientOutputAmount")) {
+            setError("Price moved — try increasing slippage tolerance");
+          } else if (reason.includes("TransferRestricted")) {
+            setError("Transfer restricted by token compliance");
+          } else if (reason.includes("InsufficientLiquidity")) {
+            setError("Not enough liquidity in the pool");
+          } else {
+            setError(reason.includes("0x1fb9b01b")
+              ? "Output below minimum — try higher slippage"
+              : "Simulation failed: " + reason.slice(0, 100));
+          }
+          setIsSwapping(false);
+          return;
+        }
 
         const hash = await walletClient.writeContract({
           address: CONTRACTS.Router,
@@ -96,7 +131,7 @@ export function useSwap(
 
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
         if (receipt.status === "reverted") {
-          setError("Swap reverted on-chain. Try increasing slippage.");
+          setError("Swap reverted. Try increasing slippage.");
         }
       } catch (err: any) {
         const msg =
@@ -104,7 +139,7 @@ export function useSwap(
             ? "Transfer restricted: token compliance check failed"
             : err?.message?.includes("InsufficientOutputAmount")
               ? "Price moved — try increasing slippage"
-              : "Swap failed";
+              : err?.shortMessage || "Swap failed";
         setError(msg);
         console.error("Swap error:", err);
       }
