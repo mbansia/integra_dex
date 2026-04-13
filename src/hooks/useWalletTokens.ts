@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { parseAbiItem } from "viem";
 import { useWeb3 } from "@/providers/web3-provider";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import type { TokenInfo } from "@/lib/token-list";
 
-const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const TRANSFER_EVENT = parseAbiItem(
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+);
 const CHUNK_SIZE = 10000n;
-const MAX_CHUNKS = 30; // ~300k blocks back
-
-function addressToTopic(addr: `0x${string}`): `0x${string}` {
-  return `0x${"0".repeat(24)}${addr.slice(2).toLowerCase()}` as `0x${string}`;
-}
+const MAX_CHUNKS = 30;
 
 async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<TokenInfo | null> {
   try {
@@ -64,10 +63,8 @@ export function useWalletTokens() {
       setProgress(0);
       try {
         const latestBlock = await publicClient.getBlockNumber();
-        const userTopic = addressToTopic(address);
         const uniqueTokens = new Set<string>();
 
-        // Scan recent blocks in chunks for Transfer events where user is sender or receiver
         for (let i = 0; i < MAX_CHUNKS; i++) {
           if (cancelled) break;
           const toBlock = latestBlock - BigInt(i) * CHUNK_SIZE;
@@ -75,18 +72,20 @@ export function useWalletTokens() {
           if (fromBlock < 0n) break;
 
           try {
-            // Transfers TO user
-            const logsTo = await publicClient.getLogs({
-              fromBlock,
-              toBlock,
-              topics: [TRANSFER_TOPIC, null, userTopic],
-            });
-            // Transfers FROM user
-            const logsFrom = await publicClient.getLogs({
-              fromBlock,
-              toBlock,
-              topics: [TRANSFER_TOPIC, userTopic],
-            });
+            const [logsTo, logsFrom] = await Promise.all([
+              publicClient.getLogs({
+                event: TRANSFER_EVENT,
+                args: { to: address },
+                fromBlock,
+                toBlock,
+              }),
+              publicClient.getLogs({
+                event: TRANSFER_EVENT,
+                args: { from: address },
+                fromBlock,
+                toBlock,
+              }),
+            ]);
 
             [...logsTo, ...logsFrom].forEach((log) => {
               uniqueTokens.add(log.address.toLowerCase());
