@@ -4,13 +4,15 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useWeb3 } from "@/providers/web3-provider";
 import { useTokenList } from "@/hooks/useTokenList";
+import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { shortenAddress } from "@/lib/utils";
 import type { TokenInfo } from "@/lib/token-list";
 
 export default function TokensPage() {
   const { tokens, isLoading } = useTokenList();
-  const { publicClient } = useWeb3();
+  const { tokens: walletTokens, isScanning, progress } = useWalletTokens();
+  const { publicClient, isConnected } = useWeb3();
   const [showAdd, setShowAdd] = useState(false);
   const [addAddress, setAddAddress] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
@@ -70,15 +72,33 @@ export default function TokensPage() {
     setIsAdding(false);
   }, [addAddress, publicClient]);
 
-  const allTokens = [
-    ...tokens,
-    ...customTokens.filter((c) => !tokens.some((t) => t.address.toLowerCase() === c.address.toLowerCase())),
-  ];
+  // Merge: default list + pool-discovered + wallet-scanned + manually added
+  const seen = new Set<string>();
+  const allTokens: TokenInfo[] = [];
+  for (const t of [...tokens, ...walletTokens, ...customTokens]) {
+    const key = t.address.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      allTokens.push(t);
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto pt-12 px-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: "var(--ps-text)" }}>Tokens</h1>
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--ps-text)" }}>Tokens</h1>
+          {isConnected && isScanning && (
+            <p className="text-xs text-plotswap-text-muted mt-1">
+              Scanning your wallet history... {progress}%
+            </p>
+          )}
+          {isConnected && !isScanning && walletTokens.length > 0 && (
+            <p className="text-xs text-plotswap-text-muted mt-1">
+              Found {walletTokens.length} token{walletTokens.length !== 1 ? "s" : ""} from your wallet
+            </p>
+          )}
+        </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
           className="btn-primary px-4 py-2 text-sm"
