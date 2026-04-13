@@ -44,7 +44,7 @@ export function SwapCard() {
     [amountInStr, tokenIn]
   );
 
-  const { amountOut, isQuoting, isSwapping, error, swap } = useSwap(
+  const { amountOut, isQuoting, isSwapping, error, success, swap } = useSwap(
     tokenIn?.address,
     tokenOut?.address,
     amountIn
@@ -305,9 +305,16 @@ export function SwapCard() {
         )}
 
         {/* Error */}
-        {error && !hasRestriction && (
+        {error && !hasRestriction && !success && (
           <div className="mb-3 px-3 py-2 rounded-lg bg-plotswap-danger/10 border border-plotswap-danger/20 text-plotswap-danger text-xs">
             {error}
+          </div>
+        )}
+
+        {/* Success */}
+        {success && (
+          <div className="mb-3 px-3 py-2 rounded-lg bg-plotswap-success/10 border border-plotswap-success/20 text-plotswap-success text-xs">
+            Swap completed successfully!
           </div>
         )}
 

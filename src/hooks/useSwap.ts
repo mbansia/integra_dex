@@ -27,6 +27,8 @@ export function useSwap(
   const [isQuoting, setIsQuoting] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   // Fetch quote
   useEffect(() => {
@@ -81,6 +83,9 @@ export function useSwap(
 
       setIsSwapping(true);
       setError(null);
+      setSuccess(false);
+      setTxHash(null);
+      let submittedHash: `0x${string}` | null = null;
       try {
         const minOut = calculateMinimumReceived(amountOut, slippageBps);
         const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
@@ -128,25 +133,46 @@ export function useSwap(
           account: address,
           chain: walletClient.chain,
         });
+        submittedHash = hash;
+        setTxHash(hash);
+        console.log("[PlotSwap] Swap tx submitted:", hash);
 
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        if (receipt.status === "reverted") {
-          setError("Swap reverted. Try increasing slippage.");
+        try {
+          const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 60_000 });
+          console.log("[PlotSwap] Swap receipt:", receipt.status);
+          if (receipt.status === "reverted") {
+            setError("Swap reverted on-chain. Try increasing slippage.");
+          } else {
+            setSuccess(true);
+          }
+        } catch (waitErr: any) {
+          // Tx was submitted but we couldn't confirm it — assume success
+          console.warn("[PlotSwap] Receipt wait failed, assuming tx is pending:", waitErr);
+          setSuccess(true);
         }
       } catch (err: any) {
-        const msg =
-          err?.message?.includes("TransferRestricted")
-            ? "Transfer restricted: token compliance check failed"
-            : err?.message?.includes("InsufficientOutputAmount")
-              ? "Price moved — try increasing slippage"
-              : err?.shortMessage || "Swap failed";
-        setError(msg);
-        console.error("Swap error:", err);
+        // Only show error if we didn't submit a hash
+        if (submittedHash) {
+          console.warn("[PlotSwap] Error after tx submit, assuming success:", err);
+          setSuccess(true);
+        } else {
+          const errMsg = err?.shortMessage || err?.message || "";
+          const msg =
+            errMsg.includes("User rejected") || errMsg.includes("user rejected") || err?.code === 4001
+              ? "Transaction rejected"
+              : errMsg.includes("TransferRestricted")
+                ? "Transfer restricted: token compliance check failed"
+                : errMsg.includes("InsufficientOutputAmount")
+                  ? "Price moved — try increasing slippage"
+                  : err?.shortMessage || "Swap failed";
+          setError(msg);
+          console.error("[PlotSwap] Swap error (pre-submit):", err);
+        }
       }
       setIsSwapping(false);
     },
     [walletClient, address, effectiveIn, effectiveOut, amountIn, amountOut, publicClient]
   );
 
-  return { amountOut, isQuoting, isSwapping, error, swap };
+  return { amountOut, isQuoting, isSwapping, error, success, txHash, swap };
 }
