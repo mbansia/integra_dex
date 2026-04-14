@@ -5,6 +5,7 @@ import { useWeb3 } from "@/providers/web3-provider";
 import { ROUTER_ABI } from "@/lib/abis/PlotswapRouter";
 import { CONTRACTS } from "@/lib/contracts";
 import { calculateMinimumReceived } from "@/lib/utils";
+import { decodeError } from "@/lib/error-decoder";
 
 const NATIVE = "0x0000000000000000000000000000000000000000";
 const WIRL = "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34" as `0x${string}`;
@@ -109,18 +110,8 @@ export function useSwap(
           });
         } catch (simErr: any) {
           console.error("[PlotSwap] Swap simulation failed:", simErr);
-          const reason = simErr?.shortMessage || simErr?.message || "Unknown";
-          if (reason.includes("InsufficientOutputAmount")) {
-            setError("Price moved — try increasing slippage tolerance");
-          } else if (reason.includes("TransferRestricted")) {
-            setError("Transfer restricted by token compliance");
-          } else if (reason.includes("InsufficientLiquidity")) {
-            setError("Not enough liquidity in the pool");
-          } else {
-            setError(reason.includes("0x1fb9b01b")
-              ? "Output below minimum — try higher slippage"
-              : "Simulation failed: " + reason.slice(0, 100));
-          }
+          const raw = simErr?.shortMessage || simErr?.message || "Unknown error";
+          setError(decodeError(raw));
           setIsSwapping(false);
           return;
         }
@@ -141,7 +132,7 @@ export function useSwap(
           const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 60_000 });
           console.log("[PlotSwap] Swap receipt:", receipt.status);
           if (receipt.status === "reverted") {
-            setError("Swap reverted on-chain. Try increasing slippage.");
+            setError("Swap failed on-chain. Try increasing slippage or checking your balance.");
           } else {
             setSuccess(true);
           }
@@ -156,16 +147,8 @@ export function useSwap(
           console.warn("[PlotSwap] Error after tx submit, assuming success:", err);
           setSuccess(true);
         } else {
-          const errMsg = err?.shortMessage || err?.message || "";
-          const msg =
-            errMsg.includes("User rejected") || errMsg.includes("user rejected") || err?.code === 4001
-              ? "Transaction rejected"
-              : errMsg.includes("TransferRestricted")
-                ? "Transfer restricted: token compliance check failed"
-                : errMsg.includes("InsufficientOutputAmount")
-                  ? "Price moved — try increasing slippage"
-                  : err?.shortMessage || "Swap failed";
-          setError(msg);
+          const raw = err?.shortMessage || err?.message || "Swap failed";
+          setError(decodeError(raw));
           console.error("[PlotSwap] Swap error (pre-submit):", err);
         }
       }

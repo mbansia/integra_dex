@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useWeb3 } from "@/providers/web3-provider";
 import { ROUTER_ABI } from "@/lib/abis/PlotswapRouter";
 import { CONTRACTS } from "@/lib/contracts";
+import { decodeError } from "@/lib/error-decoder";
 
 const NATIVE = "0x0000000000000000000000000000000000000000";
 const WIRL = "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34" as `0x${string}`;
@@ -59,8 +60,8 @@ export function useLiquidity() {
           });
         } catch (simErr: any) {
           console.error("[PlotSwap] Simulation failed:", simErr);
-          const reason = simErr?.shortMessage || simErr?.message || "Unknown error";
-          setError("Simulation failed: " + reason);
+          const raw = simErr?.shortMessage || simErr?.message || "Unknown error";
+          setError(decodeError(raw));
           setIsPending(false);
           return;
         }
@@ -86,21 +87,15 @@ export function useLiquidity() {
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
         console.log("[PlotSwap] Liquidity tx status:", receipt.status);
         if (receipt.status === "reverted") {
-          setError("Transaction reverted on-chain. Check token approvals and balances.");
+          setError("Transaction failed on-chain. Make sure you have enough tokens and approvals.");
         } else {
           console.log("[PlotSwap] Liquidity added successfully");
           setSuccess(true);
         }
       } catch (err: any) {
         console.error("[PlotSwap] Add liquidity error:", err);
-        const msg = err?.shortMessage || err?.message || "";
-        if (msg.includes("TransferRestricted")) {
-          setError("Transfer restricted by token compliance");
-        } else if (msg.includes("user rejected")) {
-          setError("Transaction rejected");
-        } else {
-          setError(msg || "Failed to add liquidity");
-        }
+        const raw = err?.shortMessage || err?.message || "Failed to add liquidity";
+        setError(decodeError(raw));
       }
       setIsPending(false);
     },
@@ -141,7 +136,7 @@ export function useLiquidity() {
         }
       } catch (err: any) {
         console.error("[PlotSwap] Remove liquidity error:", err);
-        setError(err?.shortMessage || "Failed to remove liquidity");
+        setError(decodeError(err?.shortMessage || err?.message || "Failed to remove liquidity"));
       }
       setIsPending(false);
     },
