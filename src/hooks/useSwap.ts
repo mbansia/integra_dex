@@ -3,9 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWeb3 } from "@/providers/web3-provider";
 import { ROUTER_ABI } from "@/lib/abis/PlotswapRouter";
+import { WIRL_ABI } from "@/lib/abis/WIRL";
+import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { CONTRACTS } from "@/lib/contracts";
 import { calculateMinimumReceived } from "@/lib/utils";
 import { decodeError } from "@/lib/error-decoder";
+import { maxUint256 } from "viem";
 
 const NATIVE = "0x0000000000000000000000000000000000000000";
 const WIRL = "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34" as `0x${string}`;
@@ -90,6 +93,38 @@ export function useSwap(
       try {
         const minOut = calculateMinimumReceived(amountOut, slippageBps);
         const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
+
+        // Auto-wrap IRL → WIRL if input is native IRL
+        if (tokenIn === NATIVE && effectiveIn === WIRL) {
+          // Check WIRL balance
+          const wirlBal = await publicClient.readContract({
+            address: WIRL, abi: ERC20_ABI, functionName: "balanceOf", args: [address],
+          }) as bigint;
+
+          if (wirlBal < amountIn) {
+            const wrapAmount = amountIn - wirlBal;
+            console.log("[PlotSwap] Auto-wrapping", wrapAmount.toString(), "IRL → WIRL");
+            const wrapHash = await walletClient.writeContract({
+              address: WIRL, abi: WIRL_ABI, functionName: "deposit",
+              value: wrapAmount, account: address, chain: walletClient.chain,
+            });
+            await publicClient.waitForTransactionReceipt({ hash: wrapHash });
+          }
+
+          // Check WIRL allowance for Router
+          const allowance = await publicClient.readContract({
+            address: WIRL, abi: ERC20_ABI, functionName: "allowance", args: [address, CONTRACTS.Router],
+          }) as bigint;
+
+          if (allowance < amountIn) {
+            console.log("[PlotSwap] Auto-approving WIRL for Router");
+            const approveHash = await walletClient.writeContract({
+              address: WIRL, abi: ERC20_ABI, functionName: "approve",
+              args: [CONTRACTS.Router, maxUint256], account: address, chain: walletClient.chain,
+            });
+            await publicClient.waitForTransactionReceipt({ hash: approveHash });
+          }
+        }
 
         console.log("[PlotSwap] Swap:", {
           amountIn: amountIn.toString(),
