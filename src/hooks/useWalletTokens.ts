@@ -18,15 +18,22 @@ let _tokens: TokenInfo[] = [];
 let _isScanning = false;
 let _progress = 0;
 let _scanDone = false;
-let _scanPromise: Promise<void> | null = null;
 const _listeners = new Set<() => void>();
 
+// Stable snapshot — only recreated when values actually change
+let _snapshot = { tokens: _tokens, isScanning: _isScanning, progress: _progress };
+
+function updateSnapshot() {
+  _snapshot = { tokens: _tokens, isScanning: _isScanning, progress: _progress };
+}
+
 function notify() {
+  updateSnapshot();
   _listeners.forEach((l) => l());
 }
 
 function getSnapshot() {
-  return { tokens: _tokens, isScanning: _isScanning, progress: _progress };
+  return _snapshot;
 }
 
 async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<TokenInfo | null> {
@@ -107,20 +114,22 @@ async function runScan(address: `0x${string}`, publicClient: any) {
 // Hook: subscribes to global store, returns cached results
 export function useWalletTokens() {
   const { address, publicClient } = useWeb3();
-  const [snap, setSnap] = useState(() => getSnapshot());
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    // Subscribe to updates
-    const update = () => setSnap(getSnapshot());
+    const update = () => forceUpdate((n) => n + 1);
     _listeners.add(update);
-
-    // Trigger scan if needed
-    if (address) runScan(address, publicClient);
-
     return () => { _listeners.delete(update); };
+  }, []);
+
+  // Trigger scan once when address available
+  useEffect(() => {
+    if (address && !_scanDone && !_isScanning) {
+      runScan(address, publicClient);
+    }
   }, [address, publicClient]);
 
-  return snap;
+  return getSnapshot();
 }
 
 // Trigger scan from anywhere (e.g., layout/provider)
