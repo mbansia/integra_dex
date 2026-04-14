@@ -36,6 +36,10 @@ function getSnapshot() {
   return _snapshot;
 }
 
+const PAIR_TOKEN0_ABI = [{ inputs: [], name: "token0", outputs: [{ type: "address" }], stateMutability: "view", type: "function" }] as const;
+const PAIR_TOKEN1_ABI = [{ inputs: [], name: "token1", outputs: [{ type: "address" }], stateMutability: "view", type: "function" }] as const;
+const SYMBOL_ABI = [{ inputs: [], name: "symbol", outputs: [{ type: "string" }], stateMutability: "view", type: "function" }] as const;
+
 async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<TokenInfo | null> {
   try {
     const [symbol, decimals] = await Promise.all([
@@ -51,6 +55,24 @@ async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<T
       })) as string;
     } catch { name = symbol as string; }
 
+    // Detect LP tokens and rename with pair symbols
+    let finalName = name;
+    let finalSymbol = symbol as string;
+    if (name === "PlotSwap LP" || finalSymbol === "PLOT-LP") {
+      try {
+        const [t0, t1] = await Promise.all([
+          publicClient.readContract({ address: addr, abi: PAIR_TOKEN0_ABI, functionName: "token0" }),
+          publicClient.readContract({ address: addr, abi: PAIR_TOKEN1_ABI, functionName: "token1" }),
+        ]);
+        const [s0, s1] = await Promise.all([
+          publicClient.readContract({ address: t0 as `0x${string}`, abi: SYMBOL_ABI, functionName: "symbol" }).catch(() => "?"),
+          publicClient.readContract({ address: t1 as `0x${string}`, abi: SYMBOL_ABI, functionName: "symbol" }).catch(() => "?"),
+        ]);
+        finalName = `${s0}/${s1} LP`;
+        finalSymbol = `${s0}/${s1}`;
+      } catch {}
+    }
+
     let isERC1404 = false;
     try {
       await publicClient.readContract({
@@ -62,7 +84,7 @@ async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<T
       isERC1404 = true;
     } catch { isERC1404 = false; }
 
-    return { address: addr, name, symbol: symbol as string, decimals: Number(decimals), logoURI: "", isERC1404 };
+    return { address: addr, name: finalName, symbol: finalSymbol, decimals: Number(decimals), logoURI: "", isERC1404 };
   } catch {
     return null;
   }
