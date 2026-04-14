@@ -15,10 +15,23 @@ export function formatTokenAmount(
   decimals: number,
   maxDecimals = 6
 ): string {
+  if (amount === 0n) return "0";
+
   const formatted = formatUnits(amount, decimals);
   const parts = formatted.split(".");
+
+  // If the formatted result rounds to 0 but amount > 0, show raw units
+  if (parts[0] === "0" && amount > 0n) {
+    const trimmed = parts[1]?.replace(/0+$/, "") || "";
+    if (trimmed === "" || trimmed.length > maxDecimals) {
+      // Amount is too small for decimal display — show as raw integer
+      return amount.toString();
+    }
+  }
+
   if (parts.length === 1) return formatted;
-  return `${parts[0]}.${parts[1].slice(0, maxDecimals)}`;
+  const decimalsStr = parts[1].slice(0, maxDecimals).replace(/0+$/, "");
+  return decimalsStr ? `${parts[0]}.${decimalsStr}` : parts[0];
 }
 
 export function parseTokenAmount(amount: string, decimals: number): bigint {
