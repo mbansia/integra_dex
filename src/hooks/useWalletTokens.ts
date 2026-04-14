@@ -12,6 +12,11 @@ const TRANSFER_EVENT = parseAbiItem(
 const CHUNK_SIZE = 10000n;
 const MAX_CHUNKS = 30;
 
+// Session cache — persists across page navigations within the same tab
+let cachedAddress: string | null = null;
+let cachedTokens: TokenInfo[] = [];
+let scanComplete = false;
+
 async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<TokenInfo | null> {
   try {
     const [symbol, decimals] = await Promise.all([
@@ -46,13 +51,21 @@ async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<T
 
 export function useWalletTokens() {
   const { address, publicClient } = useWeb3();
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
+  const [tokens, setTokens] = useState<TokenInfo[]>(() =>
+    address && cachedAddress === address ? cachedTokens : []
+  );
   const [isScanning, setIsScanning] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (!address) {
       setTokens([]);
+      return;
+    }
+
+    // Return cached results if same address already scanned
+    if (cachedAddress === address && scanComplete) {
+      setTokens(cachedTokens);
       return;
     }
 
@@ -90,21 +103,24 @@ export function useWalletTokens() {
             [...logsTo, ...logsFrom].forEach((log) => {
               uniqueTokens.add(log.address.toLowerCase());
             });
-          } catch {
-            // Skip chunks that fail
-          }
+          } catch {}
 
           setProgress(Math.round(((i + 1) / MAX_CHUNKS) * 100));
         }
 
         if (cancelled) return;
 
-        // Fetch metadata for unique tokens
         const tokenAddrs = Array.from(uniqueTokens) as `0x${string}`[];
         const metas = await Promise.all(tokenAddrs.map((a) => fetchTokenMeta(publicClient, a)));
         const validTokens = metas.filter((t): t is TokenInfo => t !== null);
 
-        if (!cancelled) setTokens(validTokens);
+        if (!cancelled) {
+          // Cache for the session
+          cachedAddress = address;
+          cachedTokens = validTokens;
+          scanComplete = true;
+          setTokens(validTokens);
+        }
       } catch (err) {
         console.error("[PlotSwap] Wallet token scan error:", err);
       }

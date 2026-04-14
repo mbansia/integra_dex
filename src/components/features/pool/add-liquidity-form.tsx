@@ -99,6 +99,12 @@ export function AddLiquidityForm() {
   };
 
   const handleSubmit = async () => {
+    console.log("[PlotSwap] Supply clicked:", {
+      tokenA: tokenA?.symbol, tokenB: tokenB?.symbol,
+      amountA: amountA.toString(), amountB: amountB.toString(),
+      needsWrapA, needsWrapB, needsApprovalA, needsApprovalB,
+      allowanceA: approvalA.allowance.toString(), allowanceB: approvalB.allowance.toString(),
+    });
     if (!tokenA || !tokenB || amountA === 0n || amountB === 0n) return;
     await addLiquidity(tokenA.address, tokenB.address, amountA, amountB);
   };
@@ -206,13 +212,21 @@ export function AddLiquidityForm() {
               <ConnectModal isOpen={showConnect} onClose={() => setShowConnect(false)} />
             </>
           ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={!tokenA || !tokenB || amountA === 0n || amountB === 0n || isPending || isWrapping || !!needsWrapA || !!needsWrapB || !!needsApprovalA || !!needsApprovalB}
-              className="btn-primary w-full py-3"
-            >
-              {isPending ? "Supplying..." : "Supply Liquidity"}
-            </button>
+            <>
+              {/* Debug: show what's blocking */}
+              {(!!needsWrapA || !!needsWrapB || !!needsApprovalA || !!needsApprovalB) && amountA > 0n && amountB > 0n && (
+                <p className="text-[10px] text-plotswap-text-subtle text-center">
+                  {needsWrapA ? "Wrap IRL first" : needsApprovalA ? `Approve ${tokenA?.symbol} first` : needsWrapB ? "Wrap IRL first" : needsApprovalB ? `Approve ${tokenB?.symbol} first` : ""}
+                </p>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={!tokenA || !tokenB || amountA === 0n || amountB === 0n || isPending || isWrapping || !!needsWrapA || !!needsWrapB || !!needsApprovalA || !!needsApprovalB}
+                className="btn-primary w-full py-3"
+              >
+                {isPending ? "Supplying..." : "Supply Liquidity"}
+              </button>
+            </>
           )}
         </div>
       </div>
