@@ -83,7 +83,7 @@ export default function HomePage() {
         </div>
 
         <p className="text-lg sm:text-xl text-plotswap-text-muted mb-10 max-w-lg mx-auto text-center animate-fade-up-delay leading-relaxed">
-          Swap ERC-20 and ERC-1404 tokens with automated liquidity.
+          Swap ERC-20, iRWA, and ERC-1404 tokens with automated liquidity.
           <br className="hidden sm:block" />
           <span className="text-plotswap-text">Instant. Fluid. Built for real-world assets.</span>
         </p>
