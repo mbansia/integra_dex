@@ -5,9 +5,62 @@ import Link from "next/link";
 import { useWeb3 } from "@/providers/web3-provider";
 import { useTokenList } from "@/hooks/useTokenList";
 import { useWalletTokens } from "@/hooks/useWalletTokens";
+import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
-import { shortenAddress } from "@/lib/utils";
+import { shortenAddress, formatTokenAmount } from "@/lib/utils";
 import type { TokenInfo } from "@/lib/token-list";
+
+function TokenRow({ token, index }: { token: TokenInfo; index: number }) {
+  const balance = useTokenBalance(token.address);
+  return (
+    <tr className="border-b transition-colors" style={{ borderColor: "var(--ps-border)" }}>
+      <td className="py-4 px-4 text-sm" style={{ color: "var(--ps-text-muted)" }}>{index + 1}</td>
+      <td className="py-4 px-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">
+            {token.symbol.slice(0, 2)}
+          </div>
+          <span className="font-medium text-sm" style={{ color: "var(--ps-text)" }}>{token.name}</span>
+        </div>
+      </td>
+      <td className="py-4 px-4 text-sm font-mono" style={{ color: "var(--ps-text)" }}>{token.symbol}</td>
+      <td className="py-4 px-4">
+        <span className="text-sm font-mono text-plotswap-text-muted">{shortenAddress(token.address)}</span>
+      </td>
+      <td className="py-4 px-4">
+        {token.isERC1404 ? (
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">ERC-1404</span>
+        ) : (
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">ERC-20</span>
+        )}
+      </td>
+      <td className="py-4 px-4 text-right">
+        <span className="text-sm font-mono" style={{ color: "var(--ps-text)" }}>
+          {formatTokenAmount(balance, token.decimals, 4)}
+        </span>
+      </td>
+      <td className="py-4 px-4 text-right">
+        <div className="flex items-center justify-end gap-3">
+          {token.address !== "0x0000000000000000000000000000000000000000" && (
+            <button
+              onClick={async () => {
+                try {
+                  const p = (window as any).ethereum;
+                  if (!p) return;
+                  await p.request({ method: "wallet_watchAsset", params: { type: "ERC20", options: { address: token.address, symbol: token.symbol.slice(0, 11), decimals: token.decimals } } });
+                } catch {}
+              }}
+              className="text-xs font-medium text-plotswap-primary hover:text-plotswap-primary-hover transition-colors"
+            >
+              + Wallet
+            </button>
+          )}
+          <Link href="/swap" className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors">Trade</Link>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function TokensPage() {
   const { tokens, isLoading } = useTokenList();
@@ -161,82 +214,13 @@ export default function TokensPage() {
                 <th className="text-left py-3 px-4 font-medium">Symbol</th>
                 <th className="text-left py-3 px-4 font-medium">Address</th>
                 <th className="text-left py-3 px-4 font-medium">Type</th>
+                <th className="text-right py-3 px-4 font-medium">Balance</th>
                 <th className="text-right py-3 px-4 font-medium">Action</th>
               </tr>
             </thead>
             <tbody>
               {allTokens.map((token, i) => (
-                <tr
-                  key={token.address}
-                  className="border-b transition-colors"
-                  style={{ borderColor: "var(--ps-border)" }}
-                >
-                  <td className="py-4 px-4 text-sm" style={{ color: "var(--ps-text-muted)" }}>
-                    {i + 1}
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">
-                        {token.symbol.slice(0, 2)}
-                      </div>
-                      <span className="font-medium text-sm" style={{ color: "var(--ps-text)" }}>{token.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-sm font-mono" style={{ color: "var(--ps-text)" }}>
-                    {token.symbol}
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="text-sm font-mono text-plotswap-text-muted">
-                      {shortenAddress(token.address)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    {token.isERC1404 ? (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
-                        ERC-1404
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        ERC-20
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-4 px-4 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                      {token.address !== "0x0000000000000000000000000000000000000000" && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              const provider = (window as any).ethereum;
-                              if (!provider) return;
-                              await provider.request({
-                                method: "wallet_watchAsset",
-                                params: {
-                                  type: "ERC20",
-                                  options: {
-                                    address: token.address,
-                                    symbol: token.symbol.slice(0, 11),
-                                    decimals: token.decimals,
-                                  },
-                                },
-                              });
-                            } catch {}
-                          }}
-                          className="text-xs font-medium text-plotswap-primary hover:text-plotswap-primary-hover transition-colors"
-                          title="Add to wallet"
-                        >
-                          + Wallet
-                        </button>
-                      )}
-                      <Link
-                        href="/swap"
-                        className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
-                      >
-                        Trade
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
+                <TokenRow key={token.address} token={token} index={i} />
               ))}
             </tbody>
           </table>
