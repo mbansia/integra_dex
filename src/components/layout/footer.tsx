@@ -17,7 +17,7 @@ export function Footer() {
               Wrap
             </Link>
             <a
-              href="https://twitter.com/plotswap"
+              href="https://x.com/plot_swap"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-plotswap-text transition-colors flex items-center gap-1.5"
