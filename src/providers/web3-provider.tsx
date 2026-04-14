@@ -59,7 +59,7 @@ async function getWeb3Auth() {
   const { Web3Auth } = await import("@web3auth/modal");
   const { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } = await import("@web3auth/base");
 
-  const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
+  const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID || "BM4-vTeJRs0OW-iD2zqCUdNEbgqW-dEGMWUS53FVYpUjnKZqaBP_0njivHaDPZnNzJ8jfDd6b8gY_p0ROmIs6Jc";
   if (!clientId) return null;
 
   const w3a = new Web3Auth({
@@ -184,23 +184,29 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           }
         });
       } else if (method === "web3auth") {
+        console.log("[PlotSwap] Connecting via Web3Auth...");
         const w3a = await getWeb3Auth();
         if (!w3a) {
-          setError("Web3Auth is not configured yet. Use a browser wallet instead.");
+          setError("Web3Auth failed to initialize. Check console for details.");
           setIsConnecting(false);
           return;
         }
 
+        console.log("[PlotSwap] Web3Auth initialized, calling connect()...");
         const provider = await w3a.connect();
+        console.log("[PlotSwap] Web3Auth connect returned, provider:", !!provider);
         if (provider) {
           const client = createWalletClient({
             chain: integraTestnet,
             transport: custom(provider),
           });
           const [addr] = await client.getAddresses();
+          console.log("[PlotSwap] Web3Auth connected:", addr);
           setAddress(addr);
           setWalletClient(client);
           setConnectedWith("web3auth");
+        } else {
+          setError("Web3Auth login was cancelled or failed.");
         }
       }
     } catch (err: any) {

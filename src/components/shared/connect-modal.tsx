@@ -32,7 +32,6 @@ const WALLET_OPTIONS: {
     method: "web3auth",
     label: "Social Login",
     description: "Google, X, Email, Discord — no wallet needed",
-    tag: "Coming soon",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
         <rect width="28" height="28" rx="6" fill="#6366F1" fillOpacity="0.15" />
