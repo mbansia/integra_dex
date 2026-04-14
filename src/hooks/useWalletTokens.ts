@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore, useCallback } from "react";
 import { parseAbiItem } from "viem";
 import { useWeb3 } from "@/providers/web3-provider";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
@@ -12,10 +12,22 @@ const TRANSFER_EVENT = parseAbiItem(
 const CHUNK_SIZE = 10000n;
 const MAX_CHUNKS = 30;
 
-// Session cache — persists across page navigations within the same tab
-let cachedAddress: string | null = null;
-let cachedTokens: TokenInfo[] = [];
-let scanComplete = false;
+// Global store — shared across all components, persists across navigations
+let _address: string | null = null;
+let _tokens: TokenInfo[] = [];
+let _isScanning = false;
+let _progress = 0;
+let _scanDone = false;
+let _scanPromise: Promise<void> | null = null;
+const _listeners = new Set<() => void>();
+
+function notify() {
+  _listeners.forEach((l) => l());
+}
+
+function getSnapshot() {
+  return { tokens: _tokens, isScanning: _isScanning, progress: _progress };
+}
 
 async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<TokenInfo | null> {
   try {
@@ -49,87 +61,69 @@ async function fetchTokenMeta(publicClient: any, addr: `0x${string}`): Promise<T
   }
 }
 
+async function runScan(address: `0x${string}`, publicClient: any) {
+  if (_address === address && _scanDone) return;
+  if (_isScanning && _address === address) return;
+
+  _address = address;
+  _isScanning = true;
+  _progress = 0;
+  _tokens = [];
+  notify();
+
+  try {
+    const latestBlock = await publicClient.getBlockNumber();
+    const uniqueTokens = new Set<string>();
+
+    for (let i = 0; i < MAX_CHUNKS; i++) {
+      const toBlock = latestBlock - BigInt(i) * CHUNK_SIZE;
+      const fromBlock = toBlock - CHUNK_SIZE + 1n;
+      if (fromBlock < 0n) break;
+
+      try {
+        const [logsTo, logsFrom] = await Promise.all([
+          publicClient.getLogs({ event: TRANSFER_EVENT, args: { to: address }, fromBlock, toBlock }),
+          publicClient.getLogs({ event: TRANSFER_EVENT, args: { from: address }, fromBlock, toBlock }),
+        ]);
+        [...logsTo, ...logsFrom].forEach((log) => uniqueTokens.add(log.address.toLowerCase()));
+      } catch {}
+
+      _progress = Math.round(((i + 1) / MAX_CHUNKS) * 100);
+      notify();
+    }
+
+    const tokenAddrs = Array.from(uniqueTokens) as `0x${string}`[];
+    const metas = await Promise.all(tokenAddrs.map((a) => fetchTokenMeta(publicClient, a)));
+    _tokens = metas.filter((t): t is TokenInfo => t !== null);
+    _scanDone = true;
+  } catch (err) {
+    console.error("[PlotSwap] Wallet token scan error:", err);
+  }
+
+  _isScanning = false;
+  notify();
+}
+
+// Hook: triggers scan on first call, returns cached results instantly after
 export function useWalletTokens() {
   const { address, publicClient } = useWeb3();
-  const [tokens, setTokens] = useState<TokenInfo[]>(() =>
-    address && cachedAddress === address ? cachedTokens : []
-  );
-  const [isScanning, setIsScanning] = useState(false);
-  const [progress, setProgress] = useState(0);
+
+  const subscribe = useCallback((cb: () => void) => {
+    _listeners.add(cb);
+    return () => { _listeners.delete(cb); };
+  }, []);
+
+  const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {
-    if (!address) {
-      setTokens([]);
-      return;
-    }
-
-    // Return cached results if same address already scanned
-    if (cachedAddress === address && scanComplete) {
-      setTokens(cachedTokens);
-      return;
-    }
-
-    let cancelled = false;
-
-    const scan = async () => {
-      setIsScanning(true);
-      setProgress(0);
-      try {
-        const latestBlock = await publicClient.getBlockNumber();
-        const uniqueTokens = new Set<string>();
-
-        for (let i = 0; i < MAX_CHUNKS; i++) {
-          if (cancelled) break;
-          const toBlock = latestBlock - BigInt(i) * CHUNK_SIZE;
-          const fromBlock = toBlock - CHUNK_SIZE + 1n;
-          if (fromBlock < 0n) break;
-
-          try {
-            const [logsTo, logsFrom] = await Promise.all([
-              publicClient.getLogs({
-                event: TRANSFER_EVENT,
-                args: { to: address },
-                fromBlock,
-                toBlock,
-              }),
-              publicClient.getLogs({
-                event: TRANSFER_EVENT,
-                args: { from: address },
-                fromBlock,
-                toBlock,
-              }),
-            ]);
-
-            [...logsTo, ...logsFrom].forEach((log) => {
-              uniqueTokens.add(log.address.toLowerCase());
-            });
-          } catch {}
-
-          setProgress(Math.round(((i + 1) / MAX_CHUNKS) * 100));
-        }
-
-        if (cancelled) return;
-
-        const tokenAddrs = Array.from(uniqueTokens) as `0x${string}`[];
-        const metas = await Promise.all(tokenAddrs.map((a) => fetchTokenMeta(publicClient, a)));
-        const validTokens = metas.filter((t): t is TokenInfo => t !== null);
-
-        if (!cancelled) {
-          // Cache for the session
-          cachedAddress = address;
-          cachedTokens = validTokens;
-          scanComplete = true;
-          setTokens(validTokens);
-        }
-      } catch (err) {
-        console.error("[PlotSwap] Wallet token scan error:", err);
-      }
-      if (!cancelled) setIsScanning(false);
-    };
-
-    scan();
-    return () => { cancelled = true; };
+    if (!address) return;
+    runScan(address, publicClient);
   }, [address, publicClient]);
 
-  return { tokens, isScanning, progress };
+  return snap;
+}
+
+// Trigger scan from anywhere (e.g., layout/provider)
+export function triggerWalletScan(address: `0x${string}`, publicClient: any) {
+  runScan(address, publicClient);
 }

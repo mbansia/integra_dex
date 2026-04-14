@@ -17,6 +17,7 @@ import {
   type PublicClient,
 } from "viem";
 import { integraTestnet } from "@/lib/chains";
+import { triggerWalletScan } from "@/hooks/useWalletTokens";
 
 export type ConnectMethod = "metamask" | "web3auth";
 
@@ -99,6 +100,13 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectedWith, setConnectedWith] = useState<ConnectMethod | null>(null);
+
+  // Start wallet token scan as soon as address is known
+  useEffect(() => {
+    if (address) {
+      triggerWalletScan(address, publicClient);
+    }
+  }, [address]);
 
   // Check if previously connected via MetaMask
   useEffect(() => {
