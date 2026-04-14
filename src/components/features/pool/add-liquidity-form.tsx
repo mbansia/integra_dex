@@ -76,8 +76,10 @@ export function AddLiquidityForm() {
 
   const needsWrapA = isNativeA && amountA > 0n && wirlBalanceA < amountA;
   const needsWrapB = isNativeB && amountB > 0n && wirlBalanceB < amountB;
-  const needsApprovalA = tokenA && amountA > 0n && !isNativeA && approvalA.allowance < amountA;
-  const needsApprovalB = tokenB && amountB > 0n && !isNativeB && approvalB.allowance < amountB;
+  // After wrapping IRL→WIRL, WIRL still needs approval (it's an ERC-20)
+  // approvalA/B already use the resolved address (WIRL), so check them regardless of isNative
+  const needsApprovalA = tokenA && amountA > 0n && !needsWrapA && !approvalA.isNative && approvalA.allowance < amountA;
+  const needsApprovalB = tokenB && amountB > 0n && !needsWrapB && !approvalB.isNative && approvalB.allowance < amountB;
 
   const handleWrap = async (amount: bigint) => {
     if (!walletClient || !address) return;
