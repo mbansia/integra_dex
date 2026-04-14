@@ -30,8 +30,8 @@ const config: HardhatUserConfig = {
         network: "integra-testnet",
         chainId: 26218,
         urls: {
-          apiURL: "https://explorer.integralayer.com/api",
-          browserURL: "https://explorer.integralayer.com",
+          apiURL: "https://blockscout.integralayer.com/api",
+          browserURL: "https://blockscout.integralayer.com",
         },
       },
     ],

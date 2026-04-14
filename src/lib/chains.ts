@@ -10,7 +10,7 @@ export const integraTestnet = defineChain({
   blockExplorers: {
     default: {
       name: "Integra Explorer",
-      url: "https://explorer.integralayer.com",
+      url: "https://blockscout.integralayer.com",
     },
   },
   testnet: true,

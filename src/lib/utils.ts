@@ -34,7 +34,7 @@ export function getExplorerUrl(
   type: "tx" | "address" = "tx"
 ): string {
   const base =
-    process.env.NEXT_PUBLIC_EXPLORER_URL || "https://explorer.integralayer.com";
+    process.env.NEXT_PUBLIC_EXPLORER_URL || "https://blockscout.integralayer.com";
   return `${base}/${type}/${hashOrAddress}`;
 }
 
