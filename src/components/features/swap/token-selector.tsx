@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useWeb3 } from "@/providers/web3-provider";
 import { useTokenList } from "@/hooks/useTokenList";
+import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { formatTokenAmount } from "@/lib/utils";
@@ -57,7 +58,16 @@ export function TokenSelector({
   const [search, setSearch] = useState("");
   const [customToken, setCustomToken] = useState<TokenInfo | null>(null);
   const [isLoadingCustom, setIsLoadingCustom] = useState(false);
-  const { tokens, isLoading } = useTokenList();
+  const { tokens: defaultTokens, isLoading } = useTokenList();
+  const { tokens: walletTokens } = useWalletTokens();
+
+  // Merge default + wallet tokens, no duplicates
+  const seen = new Set<string>();
+  const tokens: TokenInfo[] = [];
+  for (const t of [...defaultTokens, ...walletTokens]) {
+    const key = t.address.toLowerCase();
+    if (!seen.has(key)) { seen.add(key); tokens.push(t); }
+  }
   const { publicClient } = useWeb3();
 
   const lookupToken = useCallback(
