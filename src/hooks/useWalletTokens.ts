@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { parseAbiItem } from "viem";
 import { useWeb3 } from "@/providers/web3-provider";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
@@ -104,20 +104,20 @@ async function runScan(address: `0x${string}`, publicClient: any) {
   notify();
 }
 
-// Hook: triggers scan on first call, returns cached results instantly after
+// Hook: subscribes to global store, returns cached results
 export function useWalletTokens() {
   const { address, publicClient } = useWeb3();
-
-  const subscribe = useCallback((cb: () => void) => {
-    _listeners.add(cb);
-    return () => { _listeners.delete(cb); };
-  }, []);
-
-  const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const [snap, setSnap] = useState(() => getSnapshot());
 
   useEffect(() => {
-    if (!address) return;
-    runScan(address, publicClient);
+    // Subscribe to updates
+    const update = () => setSnap(getSnapshot());
+    _listeners.add(update);
+
+    // Trigger scan if needed
+    if (address) runScan(address, publicClient);
+
+    return () => { _listeners.delete(update); };
   }, [address, publicClient]);
 
   return snap;
