@@ -6,7 +6,7 @@ import { useTokenList } from "@/hooks/useTokenList";
 import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
-import { formatTokenAmount } from "@/lib/utils";
+import { smartFormatAmount } from "@/lib/token-utils";
 import { WIRL_ABI } from "@/lib/abis/WIRL";
 import type { TokenInfo } from "@/lib/token-list";
 
@@ -37,7 +37,7 @@ function TokenRow({ token, onSelect }: { token: TokenInfo; onSelect: () => void 
       </div>
       <div className="text-right">
         <div className="text-xs font-mono text-plotswap-text">
-          {formatTokenAmount(balance, token.decimals, 4)}
+          {smartFormatAmount(balance, token.decimals, 4)}
         </div>
       </div>
       {token.isERC1404 && (

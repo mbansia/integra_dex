@@ -9,7 +9,8 @@ import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { TokenSelector } from "@/components/features/swap/token-selector";
 import { ConnectModal } from "@/components/shared/connect-modal";
 import { WIRL_ABI } from "@/lib/abis/WIRL";
-import { formatTokenAmount, parseTokenAmount } from "@/lib/utils";
+import { formatTokenAmount } from "@/lib/utils";
+import { smartParseAmount } from "@/lib/token-utils";
 import type { TokenInfo } from "@/lib/token-list";
 
 const NATIVE = "0x0000000000000000000000000000000000000000" as `0x${string}`;
@@ -33,14 +34,24 @@ export function AddLiquidityForm() {
   const [isWrapping, setIsWrapping] = useState(false);
   const [wrapError, setWrapError] = useState<string | null>(null);
 
+  const isNativeA = tokenA?.address === NATIVE;
+  const isNativeB = tokenB?.address === NATIVE;
+
   const resolvedAddrA = resolveAddr(tokenA?.address);
   const resolvedAddrB = resolveAddr(tokenB?.address);
 
-  // Fetch pair data for auto-quoting
+  const nativeBalanceA = useTokenBalance(tokenA?.address);
+  const nativeBalanceB = useTokenBalance(tokenB?.address);
+  const wirlBalanceA = useTokenBalance(isNativeA ? WIRL_ADDR : undefined);
+  const wirlBalanceB = useTokenBalance(isNativeB ? WIRL_ADDR : undefined);
+
+  const balanceA = nativeBalanceA;
+  const balanceB = nativeBalanceB;
+
   const { pair } = usePair(resolvedAddrA, resolvedAddrB);
 
-  const amountA = useMemo(() => parseTokenAmount(amountAStr, tokenA?.decimals ?? 18), [amountAStr, tokenA]);
-  const amountB = useMemo(() => parseTokenAmount(amountBStr, tokenB?.decimals ?? 18), [amountBStr, tokenB]);
+  const amountA = useMemo(() => smartParseAmount(amountAStr, tokenA?.decimals ?? 18, nativeBalanceA), [amountAStr, tokenA, nativeBalanceA]);
+  const amountB = useMemo(() => smartParseAmount(amountBStr, tokenB?.decimals ?? 18, nativeBalanceB), [amountBStr, tokenB, nativeBalanceB]);
 
   // Auto-quote: when user types A, calculate B (and vice versa)
   useEffect(() => {
@@ -59,17 +70,6 @@ export function AddLiquidityForm() {
       setAmountAStr(formatTokenAmount(quotedA, tokenA.decimals, tokenA.decimals));
     }
   }, [amountA, amountB, lastEdited, pair, tokenA, tokenB, resolvedAddrA]);
-
-  const isNativeA = tokenA?.address === NATIVE;
-  const isNativeB = tokenB?.address === NATIVE;
-
-  const nativeBalanceA = useTokenBalance(tokenA?.address);
-  const nativeBalanceB = useTokenBalance(tokenB?.address);
-  const wirlBalanceA = useTokenBalance(isNativeA ? WIRL_ADDR : undefined);
-  const wirlBalanceB = useTokenBalance(isNativeB ? WIRL_ADDR : undefined);
-
-  const balanceA = nativeBalanceA;
-  const balanceB = nativeBalanceB;
 
   const approvalA = useTokenApproval(resolvedAddrA);
   const approvalB = useTokenApproval(resolvedAddrB);

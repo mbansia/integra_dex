@@ -13,9 +13,9 @@ import { PriceImpact } from "./price-impact";
 import { ConnectModal } from "@/components/shared/connect-modal";
 import {
   formatTokenAmount,
-  parseTokenAmount,
   calculatePriceImpact,
 } from "@/lib/utils";
+import { smartParseAmount, smartFormatAmount } from "@/lib/token-utils";
 import { CONTRACTS } from "@/lib/contracts";
 import type { TokenInfo } from "@/lib/token-list";
 
@@ -39,9 +39,12 @@ export function SwapCard() {
   const [showSettings, setShowSettings] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
 
+  const balanceIn = useTokenBalance(tokenIn?.address);
+  const balanceOut = useTokenBalance(tokenOut?.address);
+
   const amountIn = useMemo(
-    () => parseTokenAmount(amountInStr, tokenIn?.decimals ?? 18),
-    [amountInStr, tokenIn]
+    () => smartParseAmount(amountInStr, tokenIn?.decimals ?? 18, balanceIn),
+    [amountInStr, tokenIn, balanceIn]
   );
 
   const { amountOut, isQuoting, isSwapping, error, success, swap } = useSwap(
@@ -49,9 +52,6 @@ export function SwapCard() {
     tokenOut?.address,
     amountIn
   );
-
-  const balanceIn = useTokenBalance(tokenIn?.address);
-  const balanceOut = useTokenBalance(tokenOut?.address);
   const { pair } = usePair(resolveAddr(tokenIn?.address), resolveAddr(tokenOut?.address));
   const { allowance, approve, isPending: isApproving } = useTokenApproval(
     tokenIn?.address
@@ -142,9 +142,9 @@ export function SwapCard() {
             <span className="text-xs text-plotswap-text-muted">You pay</span>
             {tokenIn && (
               <span className="text-xs text-plotswap-text-muted">
-                Balance: {formatTokenAmount(balanceIn, tokenIn.decimals, 4)}
+                Balance: {smartFormatAmount(balanceIn, tokenIn.decimals, 4)}
                 <button
-                  onClick={() => setAmountInStr(formatTokenAmount(balanceIn, tokenIn.decimals, tokenIn.decimals))}
+                  onClick={() => setAmountInStr(smartFormatAmount(balanceIn, tokenIn.decimals, tokenIn.decimals))}
                   className="ml-1 text-plotswap-primary hover:text-plotswap-primary-hover"
                 >
                   MAX
@@ -203,7 +203,7 @@ export function SwapCard() {
             <span className="text-xs text-plotswap-text-muted">You receive</span>
             {tokenOut && (
               <span className="text-xs text-plotswap-text-muted">
-                Balance: {formatTokenAmount(balanceOut, tokenOut.decimals, 4)}
+                Balance: {smartFormatAmount(balanceOut, tokenOut.decimals, 4)}
               </span>
             )}
           </div>

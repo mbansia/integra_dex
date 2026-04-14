@@ -7,7 +7,8 @@ import { useTokenList } from "@/hooks/useTokenList";
 import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
-import { shortenAddress, formatTokenAmount } from "@/lib/utils";
+import { shortenAddress } from "@/lib/utils";
+import { smartFormatAmount } from "@/lib/token-utils";
 import type { TokenInfo } from "@/lib/token-list";
 
 function TokenRow({ token, index }: { token: TokenInfo; index: number }) {
@@ -36,7 +37,7 @@ function TokenRow({ token, index }: { token: TokenInfo; index: number }) {
       </td>
       <td className="py-4 px-4 text-right">
         <span className="text-sm font-mono" style={{ color: "var(--ps-text)" }}>
-          {formatTokenAmount(balance, token.decimals, 4)}
+          {smartFormatAmount(balance, token.decimals, 4)}
         </span>
       </td>
       <td className="py-4 px-4 text-right">
