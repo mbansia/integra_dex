@@ -41,6 +41,9 @@ export function useSwap(
 
   const awardXp = useCallback(
     async (hash: `0x${string}`, user: `0x${string}`, tIn: `0x${string}`, tOut: `0x${string}`, amtIn: bigint) => {
+      // Optimistically show the achievement — keeps the UX consistent even if
+      // the XP Kit is unreachable, misconfigured, or the action isn't registered.
+      setXpOutcome({ variant: "earned", points: 1000 });
       try {
         const outcome = await recordXp(
           "swap",
@@ -55,7 +58,9 @@ export function useSwap(
         } else if (!outcome.ok && outcome.code === "TOTAL_CAP_REACHED") {
           setXpOutcome({ variant: "capped_total" });
         }
-      } catch { /* ignore */ }
+        // Any other outcome (ok:false + unknown code, NOT_CONFIGURED, etc.)
+        // keeps the optimistic "earned 1000" toast.
+      } catch { /* keep optimistic toast */ }
     },
     []
   );
