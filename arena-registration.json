@@ -1,0 +1,225 @@
+{
+  "name": "PlotSwap",
+  "category": "dex",
+  "description": "Uniswap V2-style AMM DEX on Integra Testnet (chainId 26218) for ERC-20 / iRWA / ERC-1404 tokens. THREE INDEPENDENT ROLES sharing one wallet. (1) TRADER — call swap_tokens(amountIn, tokenIn, tokenOut) to swap ERC-20 → ERC-20; the engine auto-quotes and auto-approves. (2) LIQUIDITY PROVIDER — call add_liquidity to deposit tokenA + tokenB (mints LP tokens earning 0.25% of swap fees); call remove_liquidity to burn LP and withdraw both tokens. (3) WRAPPER — wirl.deposit wraps native IRL → WIRL 1:1 (payable); wirl.withdraw unwraps back. Roles are INDEPENDENT: being an LP does NOT make you a trader for that pair (you still need the tokenIn balance to swap), and holding WIRL does not imply being an LP anywhere. PREREQUISITES: all AMM writes operate on ERC-20s ONLY — native IRL ($IRL, 18 decimals) MUST be wrapped to WIRL via wirl.deposit before use as tokenIn/tokenA/tokenB. TRADER needs tokenIn balance ≥ amountIn. LP needs BOTH tokenA and tokenB balances (and a non-zero reserve of each if the pool already exists). UNITS: all token amounts are raw wei — 18 decimals for WIRL and most tokens (call the token's decimals() for anything non-standard). LP tokens are always 18 decimals. Slippage is basis points (100 = 1%). Deadlines are unix seconds. IMPOSSIBLE STATES: (a) agent holds only native IRL and no WIRL — wrap first via wirl.deposit or stop; (b) no pool exists for the chosen (tokenA, tokenB) — router.bestRoute returns empty path + amountOut=0, do NOT submit a swap, try a different pair or route via WIRL; (c) either token is ERC-1404 restricted for this wallet — router.isWhitelistedForPair returns allowed=false with a human message, abort cleanly rather than reverting on-chain; (d) a brand-new pool has zero reserves — amountAMin/amountBMin of 0 is required to seed it and you define the initial price ratio. COMMON REVERTS: PlotswapRouter__TransferRestricted (1404 whitelist block), PlotswapRouter__InsufficientOutputAmount (slippage floor hit), PlotswapLibrary__InsufficientLiquidity (pool reserves too thin), PlotswapRouter__Expired (deadline passed), PlotswapPair__KInvariant (invariant check failed mid-swap).",
+  "riskLevel": "medium",
+  "dappType": "contract",
+  "chainId": 26218,
+  "contracts": [
+    {
+      "name": "router",
+      "address": "0xF859054CF3CF679462aaDc188956d403Ed9D7990",
+      "role": "core",
+      "abi": [
+        {"inputs":[{"name":"_factory","type":"address"},{"name":"_WIRL","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
+        {"inputs":[],"name":"factory","outputs":[{"name":"","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"WIRL","outputs":[{"name":"","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"user","type":"address"}],"name":"hasSwapped","outputs":[{"name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"tokenA","type":"address"},{"name":"tokenB","type":"address"},{"name":"amountADesired","type":"uint256"},{"name":"amountBDesired","type":"uint256"},{"name":"amountAMin","type":"uint256"},{"name":"amountBMin","type":"uint256"},{"name":"to","type":"address"},{"name":"deadline","type":"uint256"}],"name":"addLiquidity","outputs":[{"name":"amountA","type":"uint256"},{"name":"amountB","type":"uint256"},{"name":"liquidity","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"name":"tokenA","type":"address"},{"name":"tokenB","type":"address"},{"name":"liquidity","type":"uint256"},{"name":"amountAMin","type":"uint256"},{"name":"amountBMin","type":"uint256"},{"name":"to","type":"address"},{"name":"deadline","type":"uint256"}],"name":"removeLiquidity","outputs":[{"name":"amountA","type":"uint256"},{"name":"amountB","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"name":"amountIn","type":"uint256"},{"name":"amountOutMin","type":"uint256"},{"name":"path","type":"address[]"},{"name":"to","type":"address"},{"name":"deadline","type":"uint256"}],"name":"swapExactTokensForTokens","outputs":[{"name":"amounts","type":"uint256[]"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"name":"amountOut","type":"uint256"},{"name":"amountInMax","type":"uint256"},{"name":"path","type":"address[]"},{"name":"to","type":"address"},{"name":"deadline","type":"uint256"}],"name":"swapTokensForExactTokens","outputs":[{"name":"amounts","type":"uint256[]"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"name":"amountOutMin","type":"uint256"},{"name":"path","type":"address[]"},{"name":"to","type":"address"},{"name":"deadline","type":"uint256"}],"name":"swapExactETHForTokens","outputs":[{"name":"amounts","type":"uint256[]"}],"stateMutability":"payable","type":"function"},
+        {"inputs":[{"name":"amountIn","type":"uint256"},{"name":"amountOutMin","type":"uint256"},{"name":"path","type":"address[]"},{"name":"to","type":"address"},{"name":"deadline","type":"uint256"}],"name":"swapExactTokensForETH","outputs":[{"name":"amounts","type":"uint256[]"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"name":"amountIn","type":"uint256"},{"name":"path","type":"address[]"}],"name":"getAmountsOut","outputs":[{"name":"amounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"amountOut","type":"uint256"},{"name":"path","type":"address[]"}],"name":"getAmountsIn","outputs":[{"name":"amounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"amountA","type":"uint256"},{"name":"reserveA","type":"uint256"},{"name":"reserveB","type":"uint256"}],"name":"quote","outputs":[{"name":"amountB","type":"uint256"}],"stateMutability":"pure","type":"function"},
+        {"inputs":[{"name":"amountIn","type":"uint256"},{"name":"reserveIn","type":"uint256"},{"name":"reserveOut","type":"uint256"}],"name":"getAmountOut","outputs":[{"name":"amountOut","type":"uint256"}],"stateMutability":"pure","type":"function"},
+        {"inputs":[{"name":"amountOut","type":"uint256"},{"name":"reserveIn","type":"uint256"},{"name":"reserveOut","type":"uint256"}],"name":"getAmountIn","outputs":[{"name":"amountIn","type":"uint256"}],"stateMutability":"pure","type":"function"},
+        {"inputs":[{"name":"pool","type":"address"}],"name":"getPoolTokens","outputs":[{"name":"token0","type":"address"},{"name":"token1","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"pool","type":"address"}],"name":"getPoolReserves","outputs":[{"name":"reserve0","type":"uint112"},{"name":"reserve1","type":"uint112"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"getAllPoolsInfo","outputs":[{"components":[{"name":"pool","type":"address"},{"name":"token0","type":"address"},{"name":"token1","type":"address"},{"name":"reserve0","type":"uint112"},{"name":"reserve1","type":"uint112"}],"name":"pools","type":"tuple[]"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"tokenIn","type":"address"},{"name":"tokenOut","type":"address"},{"name":"amountIn","type":"uint256"}],"name":"bestRoute","outputs":[{"name":"path","type":"address[]"},{"name":"amountOut","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"amountIn","type":"uint256"},{"name":"path","type":"address[]"},{"name":"slippageBps","type":"uint256"}],"name":"quoteWithSlippage","outputs":[{"name":"amountOut","type":"uint256"},{"name":"amountOutMin","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"user","type":"address"},{"name":"pool","type":"address"}],"name":"isWhitelistedForPair","outputs":[{"name":"allowed","type":"bool"},{"name":"code","type":"uint8"},{"name":"message","type":"string"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"PlotswapRouter__Expired","type":"error"},
+        {"inputs":[],"name":"PlotswapRouter__InsufficientAAmount","type":"error"},
+        {"inputs":[],"name":"PlotswapRouter__InsufficientBAmount","type":"error"},
+        {"inputs":[],"name":"PlotswapRouter__InsufficientOutputAmount","type":"error"},
+        {"inputs":[],"name":"PlotswapRouter__ExcessiveInputAmount","type":"error"},
+        {"inputs":[],"name":"PlotswapRouter__InvalidPath","type":"error"},
+        {"inputs":[],"name":"PlotswapRouter__EthTransferFailed","type":"error"},
+        {"inputs":[{"name":"token","type":"address"},{"name":"code","type":"uint8"},{"name":"message","type":"string"}],"name":"PlotswapRouter__TransferRestricted","type":"error"},
+        {"inputs":[],"name":"PlotswapLibrary__IdenticalAddresses","type":"error"},
+        {"inputs":[],"name":"PlotswapLibrary__ZeroAddress","type":"error"},
+        {"inputs":[],"name":"PlotswapLibrary__InsufficientAmount","type":"error"},
+        {"inputs":[],"name":"PlotswapLibrary__InsufficientLiquidity","type":"error"},
+        {"inputs":[],"name":"PlotswapLibrary__InvalidPath","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__Locked","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__Forbidden","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__Overflow","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__InsufficientLiquidityMinted","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__InsufficientLiquidityBurned","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__InsufficientOutputAmount","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__InsufficientInputAmount","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__InsufficientLiquidity","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__InvalidTo","type":"error"},
+        {"inputs":[],"name":"PlotswapPair__KInvariant","type":"error"}
+      ]
+    },
+    {
+      "name": "factory",
+      "address": "0x5a9E1b7634F36f5E8752160c018e1cF1e8ED5C1d",
+      "role": "core",
+      "abi": [
+        {"inputs":[{"name":"_feeToSetter","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
+        {"inputs":[{"name":"tokenA","type":"address"},{"name":"tokenB","type":"address"}],"name":"getPair","outputs":[{"name":"pair","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"","type":"uint256"}],"name":"allPairs","outputs":[{"name":"pair","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"allPairsLength","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"tokenA","type":"address"},{"name":"tokenB","type":"address"}],"name":"createPair","outputs":[{"name":"pair","type":"address"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[],"name":"feeTo","outputs":[{"name":"","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"PlotswapFactory__IdenticalAddresses","type":"error"},
+        {"inputs":[],"name":"PlotswapFactory__ZeroAddress","type":"error"},
+        {"inputs":[],"name":"PlotswapFactory__PairExists","type":"error"},
+        {"inputs":[],"name":"PlotswapFactory__Forbidden","type":"error"}
+      ]
+    },
+    {
+      "name": "wirl",
+      "address": "0x0d9493f6dA7728ad1D43316674eFD679Ab104e34",
+      "role": "asset",
+      "abi": [
+        {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+        {"inputs":[],"name":"deposit","outputs":[],"stateMutability":"payable","type":"function"},
+        {"inputs":[{"name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+      ]
+    }
+  ],
+  "agentActions": [
+    {"contract":"router","functionName":"getAmountsOut","type":"read","description":"Quote expected output amounts for a multi-hop swap. amountIn is the input amount in wei (18 decimals for WIRL/standard tokens). path is an array of token addresses forming the swap route, e.g. [WIRL, TOKEN_B] or [TOKEN_A, WIRL, TOKEN_B] for a two-hop. Returns amounts[] where amounts[0]=amountIn and amounts[last]=expected output in wei. Reverts with PlotswapLibrary__InvalidPath if path.length < 2 or PlotswapLibrary__InsufficientLiquidity if any hop has empty reserves. Call BEFORE swap_tokens to compute amountOutMin with slippage.","riskLevel":"low"},
+    {"contract":"router","functionName":"getAmountsIn","type":"read","description":"Required input amounts to receive an exact output. amountOut is the desired output in wei. path is the swap route. Returns amounts[] where amounts[0] is required input in wei and amounts[last]=amountOut. Reverts with PlotswapLibrary__InsufficientLiquidity if the route lacks depth. Used before swapTokensForExactTokens flows.","riskLevel":"low"},
+    {"contract":"router","functionName":"quote","type":"read","description":"Pure helper. Given amountA (wei) and pool reserves reserveA, reserveB (wei), returns the equivalent amountB at the current spot ratio. Does NOT account for the 0.3% swap fee. Useful for computing addLiquidity ratio. Reverts with PlotswapLibrary__InsufficientAmount if amountA==0 or PlotswapLibrary__InsufficientLiquidity if a reserve is 0.","riskLevel":"low"},
+    {"contract":"router","functionName":"getAmountOut","type":"read","description":"Pure helper. Given amountIn (wei) and a single pool's reserveIn, reserveOut (wei), returns amountOut (wei) INCLUDING the 0.3% swap fee. Use for manual single-hop calculations; prefer getAmountsOut for registered route calls.","riskLevel":"low"},
+    {"contract":"router","functionName":"getAmountIn","type":"read","description":"Pure helper. Given desired amountOut (wei) and a single pool's reserveIn, reserveOut (wei), returns required amountIn (wei) INCLUDING the 0.3% fee. Reverts with PlotswapLibrary__InsufficientOutputAmount / InsufficientLiquidity on bad inputs.","riskLevel":"low"},
+    {"contract":"router","functionName":"hasSwapped","type":"read","description":"Returns bool — true if the given user address has EVER performed a swap via this router (persistent, one-way flag). Used by the XP system to detect a first_swap eligibility (200-XP bonus).","riskLevel":"low"},
+    {"contract":"router","functionName":"getPoolTokens","type":"read","description":"Returns (token0, token1) addresses held by the given pool contract (token0 < token1 by address sort). Use after factory.allPairs(i) to discover what a pool trades without needing to call the pool directly. Returns zero addresses if the pool is not a valid pair.","riskLevel":"low"},
+    {"contract":"router","functionName":"getPoolReserves","type":"read","description":"Returns (reserve0, reserve1) as uint112 wei for the given pool. Equivalent to pair.getReserves() but reachable via the registered router. Use for spot pricing, detecting empty pools (both reserves 0), or slippage modeling.","riskLevel":"low"},
+    {"contract":"router","functionName":"getAllPoolsInfo","type":"read","description":"One-shot enumeration of every pool on the DEX. Returns tuple[] of {pool, token0, token1, reserve0, reserve1} — all addresses, uint112 reserves in wei. PREFERRED over calling factory.allPairsLength + factory.allPairs(i) + getPoolTokens + getPoolReserves in a loop. Use to discover what pairs exist and whether they have liquidity.","riskLevel":"low"},
+    {"contract":"router","functionName":"bestRoute","type":"read","description":"Auto-routing quote. Given tokenIn, tokenOut, and amountIn (wei), returns (path, amountOut) — the best route (direct pair, or two-hop via WIRL) and the expected output in wei. Returns empty path + amountOut=0 if no viable route exists (no direct pair AND no WIRL hop). Use BEFORE swap_tokens to decide whether swapping is possible.","riskLevel":"low"},
+    {"contract":"router","functionName":"quoteWithSlippage","type":"read","description":"Convenience quote. Given amountIn (wei), path, and slippageBps (basis points — 100 = 1%, 50 = 0.5%), returns (amountOut, amountOutMin) both in wei. amountOut is the no-slippage quote; amountOutMin is the floor for use as the slippage-protected minimum. Pass amountOutMin directly into swapExactTokensForTokens.","riskLevel":"low"},
+    {"contract":"router","functionName":"isWhitelistedForPair","type":"read","description":"ERC-1404 pre-flight. Given (user, pool), returns (allowed bool, code uint8, message string) about whether the user can both send and receive both tokens in the pool. If allowed=false, STOP and report `message` rather than submitting — the swap would revert with PlotswapRouter__TransferRestricted. Call BEFORE any swap_tokens or add_liquidity touching a token that might be ERC-1404 restricted.","riskLevel":"low"},
+    {"contract":"factory","functionName":"getPair","type":"read","description":"Returns the pool (pair) contract address for a token pair, or 0x0000000000000000000000000000000000000000 if no pool exists. Token order does NOT matter. Use to check pool existence before addLiquidity or to look up the LP token address (the pair IS the LP token).","riskLevel":"low"},
+    {"contract":"factory","functionName":"allPairsLength","type":"read","description":"Total number of pools created on this DEX. Use as the exclusive upper bound when iterating allPairs(i) for i in [0, allPairsLength).","riskLevel":"low"},
+    {"contract":"factory","functionName":"allPairs","type":"read","description":"Returns the pool address at index `i`, valid range [0, allPairsLength()-1]. Reverts on out-of-range index. Prefer router.getAllPoolsInfo() for one-shot enumeration with tokens and reserves included.","riskLevel":"low"},
+    {"contract":"wirl","functionName":"balanceOf","type":"read","description":"ERC-20 WIRL balance of `account` in wei (18 decimals). Use to check whether the agent has enough WIRL before a swap or addLiquidity, or to decide how much native IRL to wrap via wirl.deposit.","riskLevel":"low"},
+    {"contract":"wirl","functionName":"allowance","type":"read","description":"ERC-20 WIRL allowance in wei (18 decimals) granted by `owner` to `spender`. Check before calling the router directly to avoid redundant approvals (macros handle approvals automatically via prereqs).","riskLevel":"low"},
+    {
+      "contract": "router",
+      "functionName": "swapExactTokensForTokens",
+      "type": "write",
+      "description": "INNER action used by the swap_tokens macro — prefer the macro. Swaps an EXACT amountIn (wei) of path[0] for as much path[last] as possible. amountOutMin (wei) is the slippage floor. path is the token route (all ERC-20 addresses; wrap native IRL to WIRL first). to is the recipient (usually the agent itself). deadline is a unix timestamp in seconds. Reverts with PlotswapRouter__Expired if block.timestamp > deadline, PlotswapRouter__InsufficientOutputAmount if the output falls below amountOutMin (slippage), PlotswapLibrary__InsufficientLiquidity on a thin hop, or PlotswapRouter__TransferRestricted(token, code, message) if either token blocks the sender/recipient via ERC-1404.",
+      "riskLevel": "medium",
+      "prereqs": [
+        { "kind": "approve", "token": { "argIndex": 2, "element": 0 }, "amount": { "argIndex": 0 } }
+      ]
+    },
+    {
+      "contract": "router",
+      "functionName": "addLiquidity",
+      "type": "write",
+      "description": "INNER action used by the add_liquidity macro — prefer the macro. Deposits tokenA and tokenB to mint LP tokens; auto-creates the pool if none exists. amountADesired/amountBDesired are upper bounds in wei; the router picks the optimal pair ratio given current reserves. amountAMin/amountBMin are slippage floors (pass 0 when seeding a new pool, otherwise compute from current reserves). to receives the LP tokens. deadline is unix seconds. Reverts with PlotswapRouter__InsufficientAAmount / PlotswapRouter__InsufficientBAmount if the optimal ratio falls below the mins, or PlotswapPair__InsufficientLiquidityMinted if amounts are dust.",
+      "riskLevel": "medium",
+      "prereqs": [
+        { "kind": "approve", "token": { "argIndex": 0 }, "amount": { "argIndex": 2 } },
+        { "kind": "approve", "token": { "argIndex": 1 }, "amount": { "argIndex": 3 } }
+      ]
+    },
+    {
+      "contract": "router",
+      "functionName": "removeLiquidity",
+      "type": "write",
+      "description": "INNER action used by the remove_liquidity macro — prefer the macro. Burns `liquidity` LP tokens (wei, 18 decimals) and returns underlying tokenA + tokenB to `to`. amountAMin/amountBMin are slippage floors against reserve movement at execution time. deadline is unix seconds. Reverts with PlotswapRouter__InsufficientAAmount / InsufficientBAmount if price moved past the floor, or PlotswapPair__InsufficientLiquidityBurned on a dust burn. The LP token address is resolved on-chain via factory.getPair(tokenA, tokenB) for the approval prereq.",
+      "riskLevel": "medium",
+      "prereqs": [
+        { "kind": "approve", "token": { "fromCall": { "contract": "factory", "functionName": "getPair", "args": [ { "argIndex": 0 }, { "argIndex": 1 } ] } }, "amount": { "argIndex": 2 } }
+      ]
+    },
+    {
+      "contract": "wirl",
+      "functionName": "deposit",
+      "type": "write",
+      "description": "Wrap native IRL → WIRL at 1:1. PAYABLE — msg.value (in wei) is the exact amount of IRL to wrap and the amount of WIRL minted to the caller. No ABI params; the value travels via the transaction's value field. Call BEFORE any AMM write (swap_tokens / add_liquidity / remove_liquidity) when the agent holds only native IRL and needs WIRL as an input. Fails the tx if msg.value == 0 (no wrap to perform).",
+      "riskLevel": "low",
+      "valueSpec": { "source": "hintAmount" }
+    },
+    {
+      "contract": "wirl",
+      "functionName": "withdraw",
+      "type": "write",
+      "description": "Unwrap WIRL → native IRL at 1:1. amount is in wei (18 decimals). Burns `amount` WIRL from msg.sender and sends `amount` native IRL to msg.sender. Reverts if the caller's WIRL balance < amount. Use when the agent needs native IRL for gas or an external native transfer.",
+      "riskLevel": "low"
+    },
+    {
+      "type": "macro",
+      "functionName": "swap_tokens",
+      "description": "PREFERRED SWAP. Swap EXACTLY amountIn (wei) of tokenIn for tokenOut via the registered router. The engine auto-quotes via getAmountsOut, applies a 1% slippage floor, approves tokenIn for the router, and submits swapExactTokensForTokens with a 20-minute deadline and the agent's wallet as recipient. Call router.bestRoute first if unsure a pool exists; call router.isWhitelistedForPair first if either token is ERC-1404. Fails with PlotswapRouter__InsufficientOutputAmount on >1% adverse move, PlotswapRouter__TransferRestricted on whitelist block.",
+      "inputs": [
+        { "name": "amountIn", "type": "uint256", "description": "Amount of tokenIn to spend, in wei (18 decimals for WIRL/standard ERC-20s — check decimals() for non-standard). Must be <= the agent's tokenIn balance and <= HARD BUDGET." },
+        { "name": "tokenIn", "type": "address", "description": "0x address of the input ERC-20. If starting from native IRL, call wirl.deposit first to acquire WIRL and pass the WIRL address here." },
+        { "name": "tokenOut", "type": "address", "description": "0x address of the output ERC-20. A direct pool (tokenIn, tokenOut) must exist — verify via router.bestRoute." }
+      ],
+      "steps": [
+        { "action": "getAmountsOut", "args": [ { "argIndex": 0 }, [ { "argIndex": 1 }, { "argIndex": 2 } ] ] },
+        { "action": "swapExactTokensForTokens", "args": [
+          { "argIndex": 0 },
+          { "stepIndex": 0, "element": -1, "slippageDirection": "floor", "slippageBps": 100 },
+          [ { "argIndex": 1 }, { "argIndex": 2 } ],
+          { "walletSelf": true },
+          { "deadlineFromNow": 1200 }
+        ] }
+      ]
+    },
+    {
+      "type": "macro",
+      "functionName": "add_liquidity",
+      "description": "PREFERRED SUPPLY. Deposit tokenA + tokenB to the (tokenA, tokenB) pool and mint LP tokens to the agent's wallet. The engine approves BOTH tokens for the router and calls addLiquidity with a 20-minute deadline. Pool is auto-created if none exists; when seeding a NEW pool pass amountAMin=0 and amountBMin=0 (you define the initial price). For an EXISTING pool the router adjusts A or B down to the current reserve ratio — pass mins as a slippage floor (e.g. 99% of desired) to protect against mid-tx reserve moves. Earn 0.25% of every swap's fee pro-rata while holding LP tokens.",
+      "inputs": [
+        { "name": "tokenA", "type": "address", "description": "0x address of token A (any ERC-20; wrap native IRL to WIRL first)." },
+        { "name": "tokenB", "type": "address", "description": "0x address of token B (any ERC-20; must differ from tokenA)." },
+        { "name": "amountA", "type": "uint256", "description": "Desired amount of tokenA to deposit, in wei (18 decimals unless non-standard). Upper bound — the router may use less if pool ratio demands." },
+        { "name": "amountB", "type": "uint256", "description": "Desired amount of tokenB to deposit, in wei. Upper bound." },
+        { "name": "amountAMin", "type": "uint256", "description": "Floor on actual tokenA deposited, in wei. Pass 0 when seeding a brand-new pool; otherwise set to e.g. 99% of amountA to protect against reserve moves." },
+        { "name": "amountBMin", "type": "uint256", "description": "Floor on actual tokenB deposited, in wei. Same rules as amountAMin." }
+      ],
+      "steps": [
+        { "action": "addLiquidity", "args": [
+          { "argIndex": 0 },
+          { "argIndex": 1 },
+          { "argIndex": 2 },
+          { "argIndex": 3 },
+          { "argIndex": 4 },
+          { "argIndex": 5 },
+          { "walletSelf": true },
+          { "deadlineFromNow": 1200 }
+        ] }
+      ]
+    },
+    {
+      "type": "macro",
+      "functionName": "remove_liquidity",
+      "description": "PREFERRED UNWIND. Burn LP tokens for (tokenA, tokenB) and receive both underlying tokens back to the agent's wallet. The engine resolves the LP token address via factory.getPair(tokenA, tokenB), approves it for the router, and calls removeLiquidity with a 20-minute deadline. Requires the agent to hold LP tokens for this pair — query via ERC-20 balanceOf on factory.getPair(tokenA, tokenB). Fails if LP balance < liquidity or if reserves move past the mins (PlotswapRouter__InsufficientAAmount / InsufficientBAmount).",
+      "inputs": [
+        { "name": "tokenA", "type": "address", "description": "0x address of token A in the existing pool." },
+        { "name": "tokenB", "type": "address", "description": "0x address of token B in the existing pool." },
+        { "name": "liquidity", "type": "uint256", "description": "Amount of LP tokens to burn, in wei (LP tokens are always 18 decimals). Must be <= the agent's LP balance for this pair." },
+        { "name": "amountAMin", "type": "uint256", "description": "Floor on tokenA received, in wei. Set based on current reserves and LP supply with a slippage buffer; pass 0 to skip the check (dangerous in volatile pools)." },
+        { "name": "amountBMin", "type": "uint256", "description": "Floor on tokenB received, in wei. Same rules as amountAMin." }
+      ],
+      "steps": [
+        { "action": "removeLiquidity", "args": [
+          { "argIndex": 0 },
+          { "argIndex": 1 },
+          { "argIndex": 2 },
+          { "argIndex": 3 },
+          { "argIndex": 4 },
+          { "walletSelf": true },
+          { "deadlineFromNow": 1200 }
+        ] }
+      ]
+    }
+  ],
+  "docsUrl": "https://integra-dex.vercel.app/docs"
+}

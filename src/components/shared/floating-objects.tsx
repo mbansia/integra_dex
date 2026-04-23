@@ -75,7 +75,7 @@ export function FloatingObjects() {
   useEffect(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    objectsRef.current = Array.from({ length: 22 }, (_, i) => createObject(i, w, h));
+    objectsRef.current = Array.from({ length: 16 }, (_, i) => createObject(i, w, h));
   }, []);
 
   // Mouse tracking

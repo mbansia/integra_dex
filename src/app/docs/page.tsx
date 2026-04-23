@@ -107,6 +107,15 @@ export default function DocsPage() {
       ],
     },
     {
+      title: "Earning XP",
+      items: [
+        { q: "What is XP?", a: "XP (experience points) tracks your activity on PlotSwap. Every qualifying swap and add-liquidity action emits an XP event recorded against your wallet on the Integra XP Kit. XP is the basis for reputation, rewards, and potential future airdrops." },
+        { q: "How much XP do I earn?", a: "1,000 XP per qualifying action (swap or supply liquidity). Caps: 5 rewarded actions per wallet per day, 30 rewarded actions per wallet lifetime. Actions beyond the caps still succeed on-chain but do not mint additional XP." },
+        { q: "Where do I see my XP?", a: "Your XP balance, history, and standing across Integra dApps live on the Integra Dashboard at dashboard.integralayer.com. When an action earns XP, PlotSwap pops a toast with a direct link to your dashboard." },
+        { q: "What if XP didn't show up after a swap?", a: "Either you hit the daily or lifetime cap for that action, or the XP relay briefly failed — in the latter case the on-chain swap is unaffected and XP simply isn't credited for that specific action. Check the dashboard to see which one applied." },
+      ],
+    },
+    {
       title: "IRL & WIRL",
       items: [
         { q: "What is IRL?", a: "IRL is the native gas token of the network — used for transaction fees, similar to ETH on Ethereum." },
