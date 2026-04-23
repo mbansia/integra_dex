@@ -200,6 +200,7 @@ export function PixelMascot({ size = 96, inline = false }: { size?: number; inli
   const [message, setMessage] = useState<string | null>(null);
   const [isBouncing, setIsBouncing] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [footerOffset, setFooterOffset] = useState(0);
 
   useEffect(() => {
     const blink = () => { setIsBlinking(true); setTimeout(() => setIsBlinking(false), 150); };
@@ -220,6 +221,25 @@ export function PixelMascot({ size = 96, inline = false }: { size?: number; inli
     const t = setTimeout(() => { setMessage(null); setMode("idle"); }, 5000);
     return () => clearTimeout(t);
   }, [message, mode]);
+
+  // Lift mascot above the footer when it scrolls into view (fixed variant only)
+  useEffect(() => {
+    if (inline) return;
+    const footer = document.querySelector("footer");
+    if (!footer) return;
+    const update = () => {
+      const rect = footer.getBoundingClientRect();
+      const overlap = Math.max(0, window.innerHeight - rect.top);
+      setFooterOffset(overlap);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [inline]);
 
   const handleJoke = useCallback(() => {
     setIsBouncing(true);
@@ -278,7 +298,10 @@ export function PixelMascot({ size = 96, inline = false }: { size?: number; inli
   const px = size / 16;
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+    <div
+      className="fixed right-6 z-40 flex flex-col items-end gap-2 transition-[bottom] duration-200 ease-out"
+      style={{ bottom: `${24 + footerOffset}px` }}
+    >
       {/* Help panel */}
       {mode === "help" && (
         <div

@@ -12,6 +12,7 @@ import { SwapSettings } from "./swap-settings";
 import { PriceImpact } from "./price-impact";
 import { ConnectModal } from "@/components/shared/connect-modal";
 import { XpHint } from "@/components/shared/xp-hint";
+import { XpEarnedToast } from "@/components/shared/xp-earned-toast";
 import {
   formatTokenAmount,
   calculatePriceImpact,
@@ -48,7 +49,7 @@ export function SwapCard() {
     [amountInStr, tokenIn, balanceIn]
   );
 
-  const { amountOut, isQuoting, isSwapping, error, success, swap } = useSwap(
+  const { amountOut, isQuoting, isSwapping, error, success, swap, xpAwarded, clearXpAwarded } = useSwap(
     tokenIn?.address,
     tokenOut?.address,
     amountIn
@@ -343,6 +344,10 @@ export function SwapCard() {
         }}
         excludeAddress={selectorFor === "in" ? tokenOut?.address : tokenIn?.address}
       />
+
+      {xpAwarded !== null && (
+        <XpEarnedToast points={xpAwarded} onDismiss={clearXpAwarded} />
+      )}
     </div>
   );
 }

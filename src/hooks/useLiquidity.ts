@@ -19,6 +19,8 @@ export function useLiquidity() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [xpAwarded, setXpAwarded] = useState<number | null>(null);
+  const clearXpAwarded = useCallback(() => setXpAwarded(null), []);
 
   const addLiquidity = useCallback(
     async (
@@ -92,7 +94,16 @@ export function useLiquidity() {
         } else {
           console.log("[PlotSwap] Liquidity added successfully");
           setSuccess(true);
-          recordXp("add_liquidity", address, { txHash: hash, tokenA: resolvedA, tokenB: resolvedB, amountA: amountA.toString(), amountB: amountB.toString() }, hash).catch(() => {});
+          recordXp(
+            "add_liquidity",
+            address,
+            { txHash: hash, tokenA: resolvedA, tokenB: resolvedB, amountA: amountA.toString(), amountB: amountB.toString() },
+            hash,
+          )
+            .then((outcome) => {
+              if (outcome.ok && outcome.points > 0) setXpAwarded(outcome.points);
+            })
+            .catch(() => {});
         }
       } catch (err: any) {
         console.error("[PlotSwap] Add liquidity error:", err);
@@ -145,5 +156,5 @@ export function useLiquidity() {
     [walletClient, address, publicClient]
   );
 
-  return { addLiquidity, removeLiquidity, isPending, error, success };
+  return { addLiquidity, removeLiquidity, isPending, error, success, xpAwarded, clearXpAwarded };
 }

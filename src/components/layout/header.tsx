@@ -12,11 +12,6 @@ const NAV_ITEMS = [
   { label: "Pool", href: "/pool" },
   { label: "Wrap", href: "/wrap" },
   { label: "Tokens", href: "/tokens" },
-  { label: "iRWA", href: "/wrap-rwa" },
-  { label: "Launch", href: "/launch" },
-  { label: "Orderbook", href: "/orderbook" },
-  { label: "Yield", href: "/yield" },
-  { label: "Agents", href: "/agents" },
 ];
 
 export function Header() {

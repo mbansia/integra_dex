@@ -9,6 +9,7 @@ import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { TokenSelector } from "@/components/features/swap/token-selector";
 import { ConnectModal } from "@/components/shared/connect-modal";
 import { XpHint } from "@/components/shared/xp-hint";
+import { XpEarnedToast } from "@/components/shared/xp-earned-toast";
 import { WIRL_ABI } from "@/lib/abis/WIRL";
 import { formatTokenAmount } from "@/lib/utils";
 import { smartParseAmount } from "@/lib/token-utils";
@@ -24,7 +25,7 @@ function resolveAddr(addr: `0x${string}` | undefined): `0x${string}` | undefined
 export function AddLiquidityForm() {
   const { isConnected, address, walletClient, publicClient } = useWeb3();
   const [showConnect, setShowConnect] = useState(false);
-  const { addLiquidity, isPending, error, success } = useLiquidity();
+  const { addLiquidity, isPending, error, success, xpAwarded, clearXpAwarded } = useLiquidity();
 
   const [tokenA, setTokenA] = useState<TokenInfo | null>(null);
   const [tokenB, setTokenB] = useState<TokenInfo | null>(null);
@@ -239,6 +240,10 @@ export function AddLiquidityForm() {
         onSelect={(token) => { if (selectorFor === "a") setTokenA(token); else setTokenB(token); }}
         excludeAddress={selectorFor === "a" ? tokenB?.address : tokenA?.address}
       />
+
+      {xpAwarded !== null && (
+        <XpEarnedToast points={xpAwarded} onDismiss={clearXpAwarded} />
+      )}
     </div>
   );
 }

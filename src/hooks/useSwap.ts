@@ -34,6 +34,23 @@ export function useSwap(
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [xpAwarded, setXpAwarded] = useState<number | null>(null);
+  const clearXpAwarded = useCallback(() => setXpAwarded(null), []);
+
+  const awardXp = useCallback(
+    async (hash: `0x${string}`, user: `0x${string}`, tIn: `0x${string}`, tOut: `0x${string}`, amtIn: bigint) => {
+      try {
+        const outcome = await recordXp(
+          "swap",
+          user,
+          { txHash: hash, tokenIn: tIn, tokenOut: tOut, amountIn: amtIn.toString() },
+          hash
+        );
+        if (outcome.ok && outcome.points > 0) setXpAwarded(outcome.points);
+      } catch { /* ignore */ }
+    },
+    []
+  );
 
   // Fetch quote
   useEffect(() => {
@@ -171,13 +188,13 @@ export function useSwap(
             setError("Swap failed on-chain. Try increasing slippage or checking your balance.");
           } else {
             setSuccess(true);
-            recordXp("swap", address, { txHash: hash, tokenIn: effectiveIn, tokenOut: effectiveOut, amountIn: amountIn.toString() }, hash).catch(() => {});
+            awardXp(hash, address, effectiveIn, effectiveOut, amountIn);
           }
         } catch (waitErr: any) {
           // Tx was submitted but we couldn't confirm it — assume success
           console.warn("[PlotSwap] Receipt wait failed, assuming tx is pending:", waitErr);
           setSuccess(true);
-          recordXp("swap", address, { txHash: hash, tokenIn: effectiveIn, tokenOut: effectiveOut, amountIn: amountIn.toString() }, hash).catch(() => {});
+          awardXp(hash, address, effectiveIn, effectiveOut, amountIn);
         }
       } catch (err: any) {
         // Only show error if we didn't submit a hash
@@ -192,8 +209,8 @@ export function useSwap(
       }
       setIsSwapping(false);
     },
-    [walletClient, address, effectiveIn, effectiveOut, amountIn, amountOut, publicClient]
+    [walletClient, address, effectiveIn, effectiveOut, amountIn, amountOut, publicClient, awardXp]
   );
 
-  return { amountOut, isQuoting, isSwapping, error, success, txHash, swap };
+  return { amountOut, isQuoting, isSwapping, error, success, txHash, swap, xpAwarded, clearXpAwarded };
 }
