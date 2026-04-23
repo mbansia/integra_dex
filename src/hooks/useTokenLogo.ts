@@ -41,12 +41,16 @@ async function fetchLogo(
     const ct = res.headers.get("content-type") ?? "";
     if (ct.startsWith("image/")) return resolved;
     const meta: any = await res.json();
+    const firstImageEntry = Array.isArray(meta?.images)
+      ? meta.images.find((x: unknown) => typeof x === "string" && x)
+      : null;
     const raw =
       meta?.image ||
       meta?.imageURI ||
       meta?.image_url ||
       meta?.logo ||
       meta?.logoURI ||
+      firstImageEntry ||
       null;
     if (typeof raw !== "string" || !raw) return null;
     return resolveIpfs(raw.trim());
