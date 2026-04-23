@@ -96,9 +96,6 @@ export function useLiquidity() {
         } else {
           console.log("[PlotSwap] Liquidity added successfully");
           setSuccess(true);
-          // Optimistically show the achievement toast — keeps UX consistent
-          // even if the XP Kit is unreachable or the action is not registered.
-          setXpOutcome({ variant: "earned", points: 1000 });
           recordXp(
             "add_liquidity",
             address,
@@ -113,7 +110,6 @@ export function useLiquidity() {
               } else if (!outcome.ok && outcome.code === "TOTAL_CAP_REACHED") {
                 setXpOutcome({ variant: "capped_total" });
               }
-              // Any other outcome keeps the optimistic toast in place.
             })
             .catch(() => {});
         }
