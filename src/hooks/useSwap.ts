@@ -8,6 +8,7 @@ import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { CONTRACTS } from "@/lib/contracts";
 import { calculateMinimumReceived } from "@/lib/utils";
 import { decodeError } from "@/lib/error-decoder";
+import { recordXp } from "@/lib/xpkit";
 import { maxUint256 } from "viem";
 
 const NATIVE = "0x0000000000000000000000000000000000000000";
@@ -170,11 +171,13 @@ export function useSwap(
             setError("Swap failed on-chain. Try increasing slippage or checking your balance.");
           } else {
             setSuccess(true);
+            recordXp("swap", address, { txHash: hash, tokenIn: effectiveIn, tokenOut: effectiveOut, amountIn: amountIn.toString() }, hash).catch(() => {});
           }
         } catch (waitErr: any) {
           // Tx was submitted but we couldn't confirm it — assume success
           console.warn("[PlotSwap] Receipt wait failed, assuming tx is pending:", waitErr);
           setSuccess(true);
+          recordXp("swap", address, { txHash: hash, tokenIn: effectiveIn, tokenOut: effectiveOut, amountIn: amountIn.toString() }, hash).catch(() => {});
         }
       } catch (err: any) {
         // Only show error if we didn't submit a hash
