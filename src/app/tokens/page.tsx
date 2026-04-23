@@ -8,7 +8,7 @@ import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useTokenLogo } from "@/hooks/useTokenLogo";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
-import { shortenAddress } from "@/lib/utils";
+import { shortenAddress, getExplorerUrl } from "@/lib/utils";
 import { smartFormatAmount } from "@/lib/token-utils";
 
 function formatWholeBalance(balance: bigint, decimals: number): string {
@@ -64,6 +64,23 @@ function TokenRow({
       <td className="py-4 px-4 text-sm font-mono" style={{ color: "var(--ps-text)" }}>{token.symbol}</td>
       <td className="py-4 px-4">
         <span className="text-sm font-mono text-plotswap-text-muted">{shortenAddress(token.address)}</span>
+      </td>
+      <td className="py-4 px-4">
+        {token.address === "0x0000000000000000000000000000000000000000" ? (
+          <span className="text-xs text-plotswap-text-subtle">—</span>
+        ) : (
+          <a
+            href={getExplorerUrl(token.address, "address")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-plotswap-primary hover:text-plotswap-primary-hover transition-colors"
+          >
+            Open Passport
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+              <path d="M3 1h6v6M9 1L3.5 6.5M5 9H1V5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
+        )}
       </td>
       <td className="py-4 px-4">
         {token.isERC1404 ? (
@@ -276,6 +293,7 @@ export default function TokensPage() {
                 <th className="text-left py-3 px-4 font-medium">Token</th>
                 <th className="text-left py-3 px-4 font-medium">Symbol</th>
                 <th className="text-left py-3 px-4 font-medium">Address</th>
+                <th className="text-left py-3 px-4 font-medium">Passport</th>
                 <th className="text-left py-3 px-4 font-medium">Type</th>
                 <th className="text-right py-3 px-4 font-medium">Balance</th>
                 <th className="text-right py-3 px-4 font-medium">Action</th>
