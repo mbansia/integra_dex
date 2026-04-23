@@ -251,7 +251,7 @@ export default function TokensPage() {
         </div>
       )}
 
-      <div className="glass-card overflow-hidden overflow-x-auto">
+      <div className="glass-card overflow-x-auto">
         {isLoading ? (
           <div className="flex flex-col items-center py-16">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
@@ -269,7 +269,7 @@ export default function TokensPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full">
+          <table className="w-full min-w-[1000px]">
             <thead>
               <tr className="border-b text-xs" style={{ borderColor: "var(--ps-border)", color: "var(--ps-text-muted)" }}>
                 <th className="text-left py-3 px-4 font-medium">#</th>
