@@ -26,7 +26,7 @@ function resolveAddr(addr: `0x${string}` | undefined): `0x${string}` | undefined
 export function AddLiquidityForm() {
   const { isConnected, address, walletClient, publicClient } = useWeb3();
   const [showConnect, setShowConnect] = useState(false);
-  const { addLiquidity, isPending, error, success, xpAwarded, clearXpAwarded } = useLiquidity();
+  const { addLiquidity, isPending, error, success, xpOutcome, clearXpOutcome } = useLiquidity();
 
   const [tokenA, setTokenA] = useState<TokenInfo | null>(null);
   const [tokenB, setTokenB] = useState<TokenInfo | null>(null);
@@ -246,8 +246,8 @@ export function AddLiquidityForm() {
         excludeAddress={selectorFor === "a" ? tokenB?.address : tokenA?.address}
       />
 
-      {xpAwarded !== null && (
-        <XpEarnedToast points={xpAwarded} onDismiss={clearXpAwarded} />
+      {xpOutcome !== null && (
+        <XpEarnedToast data={xpOutcome} onDismiss={clearXpOutcome} />
       )}
     </div>
   );

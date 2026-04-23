@@ -34,8 +34,10 @@ export function useSwap(
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [xpAwarded, setXpAwarded] = useState<number | null>(null);
-  const clearXpAwarded = useCallback(() => setXpAwarded(null), []);
+  const [xpOutcome, setXpOutcome] = useState<
+    { variant: "earned" | "capped_daily" | "capped_total"; points?: number } | null
+  >(null);
+  const clearXpOutcome = useCallback(() => setXpOutcome(null), []);
 
   const awardXp = useCallback(
     async (hash: `0x${string}`, user: `0x${string}`, tIn: `0x${string}`, tOut: `0x${string}`, amtIn: bigint) => {
@@ -46,7 +48,13 @@ export function useSwap(
           { txHash: hash, tokenIn: tIn, tokenOut: tOut, amountIn: amtIn.toString() },
           hash
         );
-        if (outcome.ok && outcome.points > 0) setXpAwarded(outcome.points);
+        if (outcome.ok && outcome.points > 0) {
+          setXpOutcome({ variant: "earned", points: outcome.points });
+        } else if (!outcome.ok && outcome.code === "DAILY_CAP_REACHED") {
+          setXpOutcome({ variant: "capped_daily" });
+        } else if (!outcome.ok && outcome.code === "TOTAL_CAP_REACHED") {
+          setXpOutcome({ variant: "capped_total" });
+        }
       } catch { /* ignore */ }
     },
     []
@@ -212,5 +220,5 @@ export function useSwap(
     [walletClient, address, effectiveIn, effectiveOut, amountIn, amountOut, publicClient, awardXp]
   );
 
-  return { amountOut, isQuoting, isSwapping, error, success, txHash, swap, xpAwarded, clearXpAwarded };
+  return { amountOut, isQuoting, isSwapping, error, success, txHash, swap, xpOutcome, clearXpOutcome };
 }

@@ -50,7 +50,7 @@ export function SwapCard() {
     [amountInStr, tokenIn, balanceIn]
   );
 
-  const { amountOut, isQuoting, isSwapping, error, success, swap, xpAwarded, clearXpAwarded } = useSwap(
+  const { amountOut, isQuoting, isSwapping, error, success, swap, xpOutcome, clearXpOutcome } = useSwap(
     tokenIn?.address,
     tokenOut?.address,
     amountIn
@@ -356,8 +356,8 @@ export function SwapCard() {
         context="swap"
       />
 
-      {xpAwarded !== null && (
-        <XpEarnedToast points={xpAwarded} onDismiss={clearXpAwarded} />
+      {xpOutcome !== null && (
+        <XpEarnedToast data={xpOutcome} onDismiss={clearXpOutcome} />
       )}
     </div>
   );

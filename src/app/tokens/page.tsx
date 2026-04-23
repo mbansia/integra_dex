@@ -200,7 +200,7 @@ export default function TokensPage() {
   }, [allTokens, balances]);
 
   return (
-    <div className="max-w-4xl mx-auto pt-12 px-4">
+    <div className="max-w-6xl mx-auto pt-12 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--ps-text)" }}>Tokens</h1>
@@ -251,7 +251,7 @@ export default function TokensPage() {
         </div>
       )}
 
-      <div className="glass-card overflow-hidden">
+      <div className="glass-card overflow-hidden overflow-x-auto">
         {isLoading ? (
           <div className="flex flex-col items-center py-16">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />

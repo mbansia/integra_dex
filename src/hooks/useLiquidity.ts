@@ -19,8 +19,10 @@ export function useLiquidity() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [xpAwarded, setXpAwarded] = useState<number | null>(null);
-  const clearXpAwarded = useCallback(() => setXpAwarded(null), []);
+  const [xpOutcome, setXpOutcome] = useState<
+    { variant: "earned" | "capped_daily" | "capped_total"; points?: number } | null
+  >(null);
+  const clearXpOutcome = useCallback(() => setXpOutcome(null), []);
 
   const addLiquidity = useCallback(
     async (
@@ -101,7 +103,13 @@ export function useLiquidity() {
             hash,
           )
             .then((outcome) => {
-              if (outcome.ok && outcome.points > 0) setXpAwarded(outcome.points);
+              if (outcome.ok && outcome.points > 0) {
+                setXpOutcome({ variant: "earned", points: outcome.points });
+              } else if (!outcome.ok && outcome.code === "DAILY_CAP_REACHED") {
+                setXpOutcome({ variant: "capped_daily" });
+              } else if (!outcome.ok && outcome.code === "TOTAL_CAP_REACHED") {
+                setXpOutcome({ variant: "capped_total" });
+              }
             })
             .catch(() => {});
         }
@@ -156,5 +164,5 @@ export function useLiquidity() {
     [walletClient, address, publicClient]
   );
 
-  return { addLiquidity, removeLiquidity, isPending, error, success, xpAwarded, clearXpAwarded };
+  return { addLiquidity, removeLiquidity, isPending, error, success, xpOutcome, clearXpOutcome };
 }
