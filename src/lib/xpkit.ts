@@ -1,6 +1,6 @@
 "use client";
 
-export type XpKitSlug = "swap" | "add_liquidity";
+export type XpKitSlug = "swap_tokens" | "add_liquidity";
 
 export type XpRecordOutcome =
   | { ok: true; points: number; eventId: number }

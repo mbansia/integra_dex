@@ -12,5 +12,7 @@ coverage.json
 .env.local
 *.log
 
+.integra/
+
 dist/
 build/

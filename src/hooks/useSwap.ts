@@ -43,7 +43,7 @@ export function useSwap(
     async (hash: `0x${string}`, user: `0x${string}`, tIn: `0x${string}`, tOut: `0x${string}`, amtIn: bigint) => {
       try {
         const outcome = await recordXp(
-          "swap",
+          "swap_tokens",
           user,
           { txHash: hash, tokenIn: tIn, tokenOut: tOut, amountIn: amtIn.toString() },
           hash
