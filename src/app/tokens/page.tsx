@@ -1,26 +1,63 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useWeb3 } from "@/providers/web3-provider";
 import { useTokenList } from "@/hooks/useTokenList";
 import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useTokenLogo } from "@/hooks/useTokenLogo";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { shortenAddress } from "@/lib/utils";
 import { smartFormatAmount } from "@/lib/token-utils";
+
+function formatWholeBalance(balance: bigint, decimals: number): string {
+  const whole = smartFormatAmount(balance, decimals, 0).split(".")[0];
+  return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 import type { TokenInfo } from "@/lib/token-list";
 
-function TokenRow({ token, index }: { token: TokenInfo; index: number }) {
+function TokenLogo({ token }: { token: TokenInfo }) {
+  const logoUrl = useTokenLogo(token.address, token.logoURI || undefined);
+  const [broken, setBroken] = useState(false);
+  if (logoUrl && !broken) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={logoUrl}
+        alt={token.symbol}
+        className="w-8 h-8 rounded-full object-cover bg-plotswap-card"
+        onError={() => setBroken(true)}
+        loading="lazy"
+      />
+    );
+  }
+  return (
+    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">
+      {token.symbol.slice(0, 2)}
+    </div>
+  );
+}
+
+function TokenRow({
+  token,
+  index,
+  onBalance,
+}: {
+  token: TokenInfo;
+  index: number;
+  onBalance: (addr: string, bal: bigint) => void;
+}) {
   const balance = useTokenBalance(token.address);
+  useEffect(() => {
+    onBalance(token.address.toLowerCase(), balance);
+  }, [balance, token.address, onBalance]);
   return (
     <tr className="border-b transition-colors" style={{ borderColor: "var(--ps-border)" }}>
       <td className="py-4 px-4 text-sm" style={{ color: "var(--ps-text-muted)" }}>{index + 1}</td>
       <td className="py-4 px-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">
-            {token.symbol.slice(0, 2)}
-          </div>
+          <TokenLogo token={token} />
           <span className="font-medium text-sm" style={{ color: "var(--ps-text)" }}>{token.name}</span>
         </div>
       </td>
@@ -37,7 +74,7 @@ function TokenRow({ token, index }: { token: TokenInfo; index: number }) {
       </td>
       <td className="py-4 px-4 text-right">
         <span className="text-sm font-mono" style={{ color: "var(--ps-text)" }}>
-          {smartFormatAmount(balance, token.decimals, 4)}
+          {formatWholeBalance(balance, token.decimals)}
         </span>
       </td>
       <td className="py-4 px-4 text-right">
@@ -127,15 +164,40 @@ export default function TokensPage() {
   }, [addAddress, publicClient]);
 
   // Merge: default list + pool-discovered + wallet-scanned + manually added
-  const seen = new Set<string>();
-  const allTokens: TokenInfo[] = [];
-  for (const t of [...tokens, ...walletTokens, ...customTokens]) {
-    const key = t.address.toLowerCase();
-    if (!seen.has(key)) {
-      seen.add(key);
-      allTokens.push(t);
+  const allTokens = useMemo<TokenInfo[]>(() => {
+    const seen = new Set<string>();
+    const out: TokenInfo[] = [];
+    for (const t of [...tokens, ...walletTokens, ...customTokens]) {
+      const key = t.address.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push(t);
+      }
     }
-  }
+    return out;
+  }, [tokens, walletTokens, customTokens]);
+
+  const [balances, setBalances] = useState<Record<string, bigint>>({});
+  const reportBalance = useCallback((addr: string, bal: bigint) => {
+    setBalances((prev) => (prev[addr] === bal ? prev : { ...prev, [addr]: bal }));
+  }, []);
+
+  const PRIORITY_SYMBOLS: Record<string, number> = { irl: 0, wirl: 1, tusdi: 2 };
+  const sortedTokens = useMemo(() => {
+    return [...allTokens].sort((a, b) => {
+      const pa = PRIORITY_SYMBOLS[a.symbol.toLowerCase()] ?? Infinity;
+      const pb = PRIORITY_SYMBOLS[b.symbol.toLowerCase()] ?? Infinity;
+      if (pa !== pb) return pa - pb;
+      const ba = balances[a.address.toLowerCase()] ?? 0n;
+      const bb = balances[b.address.toLowerCase()] ?? 0n;
+      const aZero = ba === 0n, bZero = bb === 0n;
+      if (aZero && !bZero) return 1;
+      if (!aZero && bZero) return -1;
+      if (bb > ba) return 1;
+      if (bb < ba) return -1;
+      return 0;
+    });
+  }, [allTokens, balances]);
 
   return (
     <div className="max-w-4xl mx-auto pt-12 px-4">
@@ -197,7 +259,7 @@ export default function TokensPage() {
               Discovering tokens on Integra Testnet...
             </p>
           </div>
-        ) : allTokens.length === 0 ? (
+        ) : sortedTokens.length === 0 ? (
           <div className="text-center py-16">
             <p style={{ color: "var(--ps-text-muted)" }} className="mb-2">
               No tokens discovered yet
@@ -220,8 +282,8 @@ export default function TokensPage() {
               </tr>
             </thead>
             <tbody>
-              {allTokens.map((token, i) => (
-                <TokenRow key={token.address} token={token} index={i} />
+              {sortedTokens.map((token, i) => (
+                <TokenRow key={token.address} token={token} index={i} onBalance={reportBalance} />
               ))}
             </tbody>
           </table>
