@@ -6,7 +6,7 @@ import { useWeb3 } from "@/providers/web3-provider";
 import { useTokenList } from "@/hooks/useTokenList";
 import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
-import { useTokenLogo } from "@/hooks/useTokenLogo";
+import { TokenLogo } from "@/components/shared/token-logo";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { shortenAddress, getExplorerUrl } from "@/lib/utils";
 import { smartFormatAmount } from "@/lib/token-utils";
@@ -16,28 +16,6 @@ function formatWholeBalance(balance: bigint, decimals: number): string {
   return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 import type { TokenInfo } from "@/lib/token-list";
-
-function TokenLogo({ token }: { token: TokenInfo }) {
-  const logoUrl = useTokenLogo(token.address, token.logoURI || undefined);
-  const [broken, setBroken] = useState(false);
-  if (logoUrl && !broken) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={logoUrl}
-        alt={token.symbol}
-        className="w-8 h-8 rounded-full object-cover bg-plotswap-card"
-        onError={() => setBroken(true)}
-        loading="lazy"
-      />
-    );
-  }
-  return (
-    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">
-      {token.symbol.slice(0, 2)}
-    </div>
-  );
-}
 
 function TokenRow({
   token,
@@ -57,7 +35,12 @@ function TokenRow({
       <td className="py-4 px-4 text-sm" style={{ color: "var(--ps-text-muted)" }}>{index + 1}</td>
       <td className="py-4 px-4">
         <div className="flex items-center gap-3">
-          <TokenLogo token={token} />
+          <TokenLogo
+            address={token.address}
+            symbol={token.symbol}
+            logoURI={token.logoURI}
+            fallbackClassName="bg-blue-500/20 text-blue-400"
+          />
           <span className="font-medium text-sm" style={{ color: "var(--ps-text)" }}>{token.name}</span>
         </div>
       </td>

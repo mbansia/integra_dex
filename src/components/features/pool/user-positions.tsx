@@ -8,6 +8,7 @@ import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { CONTRACTS } from "@/lib/contracts";
 import { formatTokenAmount } from "@/lib/utils";
 import { RemoveLiquidityForm } from "./remove-liquidity-form";
+import { TokenLogo } from "@/components/shared/token-logo";
 import type { PairData } from "@/hooks/usePair";
 import type { TokenInfo } from "@/lib/token-list";
 
@@ -164,12 +165,21 @@ export function UserPositions() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary border-2 border-plotswap-bg">
-                    {pos.tokenA.symbol.slice(0, 2)}
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-plotswap-accent/20 flex items-center justify-center text-[10px] font-bold text-plotswap-accent border-2 border-plotswap-bg">
-                    {pos.tokenB.symbol.slice(0, 2)}
-                  </div>
+                  <TokenLogo
+                    address={pos.tokenA.address}
+                    symbol={pos.tokenA.symbol}
+                    logoURI={pos.tokenA.logoURI}
+                    className="w-8 h-8 border-2 border-plotswap-bg"
+                    fallbackTextClassName="text-[10px]"
+                  />
+                  <TokenLogo
+                    address={pos.tokenB.address}
+                    symbol={pos.tokenB.symbol}
+                    logoURI={pos.tokenB.logoURI}
+                    className="w-8 h-8 border-2 border-plotswap-bg"
+                    fallbackClassName="bg-plotswap-accent/20 text-plotswap-accent"
+                    fallbackTextClassName="text-[10px]"
+                  />
                 </div>
                 <div>
                   <div className="font-semibold text-sm text-plotswap-text">

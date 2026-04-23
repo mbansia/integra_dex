@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatTokenAmount } from "@/lib/utils";
 import { RemoveLiquidityForm } from "./remove-liquidity-form";
+import { TokenLogo } from "@/components/shared/token-logo";
 import type { PairData } from "@/hooks/usePair";
 import type { TokenInfo } from "@/lib/token-list";
 
@@ -30,12 +31,21 @@ export function PoolCard({ pair, tokenA, tokenB }: PoolCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2">
-            <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary border-2 border-plotswap-bg">
-              {tokenA.symbol.slice(0, 2)}
-            </div>
-            <div className="w-8 h-8 rounded-full bg-plotswap-accent/20 flex items-center justify-center text-[10px] font-bold text-plotswap-accent border-2 border-plotswap-bg">
-              {tokenB.symbol.slice(0, 2)}
-            </div>
+            <TokenLogo
+              address={tokenA.address}
+              symbol={tokenA.symbol}
+              logoURI={tokenA.logoURI}
+              className="w-8 h-8 border-2 border-plotswap-bg"
+              fallbackTextClassName="text-[10px]"
+            />
+            <TokenLogo
+              address={tokenB.address}
+              symbol={tokenB.symbol}
+              logoURI={tokenB.logoURI}
+              className="w-8 h-8 border-2 border-plotswap-bg"
+              fallbackClassName="bg-plotswap-accent/20 text-plotswap-accent"
+              fallbackTextClassName="text-[10px]"
+            />
           </div>
           <div>
             <div className="font-semibold text-sm">

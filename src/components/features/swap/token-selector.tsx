@@ -6,6 +6,7 @@ import { useTokenList } from "@/hooks/useTokenList";
 import { useWalletTokens } from "@/hooks/useWalletTokens";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useAllPools } from "@/hooks/useAllPools";
+import { TokenLogo } from "@/components/shared/token-logo";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { smartFormatAmount } from "@/lib/token-utils";
 import type { TokenInfo } from "@/lib/token-list";
@@ -58,9 +59,11 @@ function TokenRow({
           : "hover:bg-plotswap-primary/10")
       }
     >
-      <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-xs font-bold text-plotswap-primary">
-        {token.symbol.slice(0, 2)}
-      </div>
+      <TokenLogo
+        address={token.address}
+        symbol={token.symbol}
+        logoURI={token.logoURI}
+      />
       <div className="text-left flex-1 min-w-0">
         <div className="font-medium text-sm text-plotswap-text flex items-center gap-2">
           <span className="truncate">{token.symbol}</span>

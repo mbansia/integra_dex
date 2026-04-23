@@ -13,6 +13,7 @@ import { PriceImpact } from "./price-impact";
 import { ConnectModal } from "@/components/shared/connect-modal";
 import { XpHint } from "@/components/shared/xp-hint";
 import { XpEarnedToast } from "@/components/shared/xp-earned-toast";
+import { TokenLogo } from "@/components/shared/token-logo";
 import {
   formatTokenAmount,
   calculatePriceImpact,
@@ -172,9 +173,13 @@ export function SwapCard() {
             >
               {tokenIn ? (
                 <>
-                  <div className="w-6 h-6 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary">
-                    {tokenIn.symbol.slice(0, 2)}
-                  </div>
+                  <TokenLogo
+                    address={tokenIn.address}
+                    symbol={tokenIn.symbol}
+                    logoURI={tokenIn.logoURI}
+                    className="w-6 h-6"
+                    fallbackTextClassName="text-[10px]"
+                  />
                   <span className="font-medium text-sm text-plotswap-text">{tokenIn.symbol}</span>
                 </>
               ) : (
@@ -227,9 +232,14 @@ export function SwapCard() {
             >
               {tokenOut ? (
                 <>
-                  <div className="w-6 h-6 rounded-full bg-plotswap-accent/20 flex items-center justify-center text-[10px] font-bold text-plotswap-accent">
-                    {tokenOut.symbol.slice(0, 2)}
-                  </div>
+                  <TokenLogo
+                    address={tokenOut.address}
+                    symbol={tokenOut.symbol}
+                    logoURI={tokenOut.logoURI}
+                    className="w-6 h-6"
+                    fallbackClassName="bg-plotswap-accent/20 text-plotswap-accent"
+                    fallbackTextClassName="text-[10px]"
+                  />
                   <span className="font-medium text-sm text-plotswap-text">{tokenOut.symbol}</span>
                 </>
               ) : (

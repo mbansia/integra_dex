@@ -10,6 +10,7 @@ import { TokenSelector } from "@/components/features/swap/token-selector";
 import { ConnectModal } from "@/components/shared/connect-modal";
 import { XpHint } from "@/components/shared/xp-hint";
 import { XpEarnedToast } from "@/components/shared/xp-earned-toast";
+import { TokenLogo } from "@/components/shared/token-logo";
 import { WIRL_ABI } from "@/lib/abis/WIRL";
 import { formatTokenAmount } from "@/lib/utils";
 import { smartParseAmount } from "@/lib/token-utils";
@@ -143,9 +144,13 @@ export function AddLiquidityForm() {
         >
           {token ? (
             <>
-              <div className="w-6 h-6 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary">
-                {token.symbol.slice(0, 2)}
-              </div>
+              <TokenLogo
+                address={token.address}
+                symbol={token.symbol}
+                logoURI={token.logoURI}
+                className="w-6 h-6"
+                fallbackTextClassName="text-[10px]"
+              />
               <span className="font-medium text-sm text-plotswap-text">{token.symbol}</span>
             </>
           ) : (

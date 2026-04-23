@@ -7,6 +7,7 @@ import { PAIR_ABI } from "@/lib/abis/PlotswapPair";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
 import { CONTRACTS } from "@/lib/contracts";
 import { formatTokenAmount } from "@/lib/utils";
+import { TokenLogo } from "@/components/shared/token-logo";
 interface PoolInfo {
   address: `0x${string}`;
   token0: { address: `0x${string}`; symbol: string; decimals: number };
@@ -166,12 +167,19 @@ export function ExistingPools({ onManage }: { onManage?: () => void }) {
                   {/* Pair info */}
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-plotswap-primary/20 flex items-center justify-center text-[10px] font-bold text-plotswap-primary border-2 border-plotswap-bg">
-                        {pool.token0.symbol.slice(0, 2)}
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-plotswap-accent/20 flex items-center justify-center text-[10px] font-bold text-plotswap-accent border-2 border-plotswap-bg">
-                        {pool.token1.symbol.slice(0, 2)}
-                      </div>
+                      <TokenLogo
+                        address={pool.token0.address}
+                        symbol={pool.token0.symbol}
+                        className="w-8 h-8 border-2 border-plotswap-bg"
+                        fallbackTextClassName="text-[10px]"
+                      />
+                      <TokenLogo
+                        address={pool.token1.address}
+                        symbol={pool.token1.symbol}
+                        className="w-8 h-8 border-2 border-plotswap-bg"
+                        fallbackClassName="bg-plotswap-accent/20 text-plotswap-accent"
+                        fallbackTextClassName="text-[10px]"
+                      />
                     </div>
                     <div>
                       <div className="font-semibold text-sm text-plotswap-text">
