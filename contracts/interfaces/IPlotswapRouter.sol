@@ -69,4 +69,44 @@ interface IPlotswapRouter {
         uint256 amountOut,
         address[] calldata path
     ) external view returns (uint256[] memory amounts);
+
+    function getPoolTokens(
+        address pool
+    ) external view returns (address token0, address token1);
+
+    function getPoolReserves(
+        address pool
+    ) external view returns (uint112 reserve0, uint112 reserve1);
+
+    function bestRoute(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn
+    ) external view returns (address[] memory path, uint256 amountOut);
+
+    function quoteWithSlippage(
+        uint256 amountIn,
+        address[] calldata path,
+        uint256 slippageBps
+    ) external view returns (uint256 amountOut, uint256 amountOutMin);
+
+    function isWhitelistedForPair(
+        address user,
+        address pool
+    ) external view returns (bool allowed, uint8 code, string memory message);
+
+    function swapExactETHForTokens(
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
+
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
 }

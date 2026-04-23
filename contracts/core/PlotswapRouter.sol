@@ -10,14 +10,29 @@ import "../interfaces/IERC1404.sol";
 import "../interfaces/IXPEmitter.sol";
 import "../libraries/PlotswapLibrary.sol";
 
+interface IWIRL {
+    function deposit() external payable;
+    function withdraw(uint256 amount) external;
+}
+
 contract PlotswapRouter is IPlotswapRouter, IXPEmitter {
     using SafeERC20 for IERC20;
+
+    struct PoolInfo {
+        address pool;
+        address token0;
+        address token1;
+        uint112 reserve0;
+        uint112 reserve1;
+    }
 
     error PlotswapRouter__Expired();
     error PlotswapRouter__InsufficientAAmount();
     error PlotswapRouter__InsufficientBAmount();
     error PlotswapRouter__InsufficientOutputAmount();
     error PlotswapRouter__ExcessiveInputAmount();
+    error PlotswapRouter__InvalidPath();
+    error PlotswapRouter__EthTransferFailed();
     error PlotswapRouter__TransferRestricted(
         address token,
         uint8 code,
@@ -37,6 +52,10 @@ contract PlotswapRouter is IPlotswapRouter, IXPEmitter {
     constructor(address _factory, address _WIRL) {
         factory = _factory;
         WIRL = _WIRL;
+    }
+
+    receive() external payable {
+        if (msg.sender != WIRL) revert PlotswapRouter__EthTransferFailed();
     }
 
     function _checkTransferRestriction(
@@ -302,5 +321,204 @@ contract PlotswapRouter is IPlotswapRouter, IXPEmitter {
         address[] calldata path
     ) public view returns (uint256[] memory amounts) {
         return PlotswapLibrary.getAmountsIn(factory, amountOut, path);
+    }
+
+    // **** POOL INSPECTION (additive) ****
+
+    function getPoolTokens(
+        address pool
+    ) external view returns (address token0, address token1) {
+        token0 = IPlotswapPair(pool).token0();
+        token1 = IPlotswapPair(pool).token1();
+    }
+
+    function getPoolReserves(
+        address pool
+    ) external view returns (uint112 reserve0, uint112 reserve1) {
+        (reserve0, reserve1, ) = IPlotswapPair(pool).getReserves();
+    }
+
+    function getAllPoolsInfo() external view returns (PoolInfo[] memory pools) {
+        uint256 len = IPlotswapFactory(factory).allPairsLength();
+        pools = new PoolInfo[](len);
+        for (uint256 i; i < len; i++) {
+            address pool = IPlotswapFactory(factory).allPairs(i);
+            (uint112 r0, uint112 r1, ) = IPlotswapPair(pool).getReserves();
+            pools[i] = PoolInfo({
+                pool: pool,
+                token0: IPlotswapPair(pool).token0(),
+                token1: IPlotswapPair(pool).token1(),
+                reserve0: r0,
+                reserve1: r1
+            });
+        }
+    }
+
+    // **** ROUTING / QUOTE HELPERS (additive) ****
+
+    function bestRoute(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn
+    ) external view returns (address[] memory path, uint256 amountOut) {
+        uint256 directOut;
+        if (IPlotswapFactory(factory).getPair(tokenIn, tokenOut) != address(0)) {
+            (uint256 rIn, uint256 rOut) = PlotswapLibrary.getReserves(
+                factory,
+                tokenIn,
+                tokenOut
+            );
+            if (rIn > 0 && rOut > 0) {
+                directOut = PlotswapLibrary.getAmountOut(amountIn, rIn, rOut);
+            }
+        }
+
+        uint256 hopOut;
+        if (tokenIn != WIRL && tokenOut != WIRL) {
+            address firstHop = IPlotswapFactory(factory).getPair(tokenIn, WIRL);
+            address secondHop = IPlotswapFactory(factory).getPair(
+                WIRL,
+                tokenOut
+            );
+            if (firstHop != address(0) && secondHop != address(0)) {
+                (uint256 a1, uint256 a2) = PlotswapLibrary.getReserves(
+                    factory,
+                    tokenIn,
+                    WIRL
+                );
+                (uint256 b1, uint256 b2) = PlotswapLibrary.getReserves(
+                    factory,
+                    WIRL,
+                    tokenOut
+                );
+                if (a1 > 0 && a2 > 0 && b1 > 0 && b2 > 0) {
+                    uint256 mid = PlotswapLibrary.getAmountOut(amountIn, a1, a2);
+                    hopOut = PlotswapLibrary.getAmountOut(mid, b1, b2);
+                }
+            }
+        }
+
+        if (directOut >= hopOut && directOut > 0) {
+            path = new address[](2);
+            path[0] = tokenIn;
+            path[1] = tokenOut;
+            amountOut = directOut;
+        } else if (hopOut > 0) {
+            path = new address[](3);
+            path[0] = tokenIn;
+            path[1] = WIRL;
+            path[2] = tokenOut;
+            amountOut = hopOut;
+        } else {
+            path = new address[](0);
+            amountOut = 0;
+        }
+    }
+
+    function quoteWithSlippage(
+        uint256 amountIn,
+        address[] calldata path,
+        uint256 slippageBps
+    ) external view returns (uint256 amountOut, uint256 amountOutMin) {
+        uint256[] memory amounts = PlotswapLibrary.getAmountsOut(
+            factory,
+            amountIn,
+            path
+        );
+        amountOut = amounts[amounts.length - 1];
+        amountOutMin = amountOut - (amountOut * slippageBps) / 10000;
+    }
+
+    // **** ERC-1404 PRE-FLIGHT (additive) ****
+
+    function isWhitelistedForPair(
+        address user,
+        address pool
+    ) external view returns (bool allowed, uint8 code, string memory message) {
+        address token0 = IPlotswapPair(pool).token0();
+        address token1 = IPlotswapPair(pool).token1();
+        (allowed, code, message) = _preflight1404(token0, pool, user);
+        if (!allowed) return (allowed, code, message);
+        (allowed, code, message) = _preflight1404(token1, pool, user);
+    }
+
+    function _preflight1404(
+        address token,
+        address from,
+        address to
+    ) internal view returns (bool, uint8, string memory) {
+        try IERC1404(token).detectTransferRestriction(from, to, 0) returns (
+            uint8 c
+        ) {
+            if (c == 0) return (true, 0, "");
+            try IERC1404(token).messageForTransferRestriction(c) returns (
+                string memory m
+            ) {
+                return (false, c, m);
+            } catch {
+                return (false, c, "");
+            }
+        } catch {
+            return (true, 0, "");
+        }
+    }
+
+    // **** NATIVE IRL SWAP HELPERS (additive) ****
+
+    function swapExactETHForTokens(
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external payable ensure(deadline) returns (uint256[] memory amounts) {
+        if (path.length < 2 || path[0] != WIRL)
+            revert PlotswapRouter__InvalidPath();
+        amounts = PlotswapLibrary.getAmountsOut(factory, msg.value, path);
+        if (amounts[amounts.length - 1] < amountOutMin)
+            revert PlotswapRouter__InsufficientOutputAmount();
+
+        address firstPair = PlotswapLibrary.pairFor(
+            factory,
+            path[0],
+            path[1]
+        );
+
+        IWIRL(WIRL).deposit{value: amounts[0]}();
+        IERC20(WIRL).safeTransfer(firstPair, amounts[0]);
+
+        _swap(amounts, path, to);
+        _emitSwapXP(msg.sender);
+    }
+
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external ensure(deadline) returns (uint256[] memory amounts) {
+        if (path.length < 2 || path[path.length - 1] != WIRL)
+            revert PlotswapRouter__InvalidPath();
+        amounts = PlotswapLibrary.getAmountsOut(factory, amountIn, path);
+        uint256 out = amounts[amounts.length - 1];
+        if (out < amountOutMin)
+            revert PlotswapRouter__InsufficientOutputAmount();
+
+        address firstPair = PlotswapLibrary.pairFor(
+            factory,
+            path[0],
+            path[1]
+        );
+
+        _checkTransferRestriction(path[0], msg.sender, firstPair, amounts[0]);
+
+        IERC20(path[0]).safeTransferFrom(msg.sender, firstPair, amounts[0]);
+        _swap(amounts, path, address(this));
+        IWIRL(WIRL).withdraw(out);
+
+        (bool success, ) = to.call{value: out}("");
+        if (!success) revert PlotswapRouter__EthTransferFailed();
+
+        _emitSwapXP(msg.sender);
     }
 }
