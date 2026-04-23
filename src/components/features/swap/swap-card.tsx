@@ -11,6 +11,7 @@ import { TokenSelector } from "./token-selector";
 import { SwapSettings } from "./swap-settings";
 import { PriceImpact } from "./price-impact";
 import { ConnectModal } from "@/components/shared/connect-modal";
+import { XpHint } from "@/components/shared/xp-hint";
 import {
   formatTokenAmount,
   calculatePriceImpact,
@@ -326,6 +327,7 @@ export function SwapCard() {
         >
           {buttonState.label}
         </button>
+        <XpHint />
       </div>
 
       {/* Connect Modal */}

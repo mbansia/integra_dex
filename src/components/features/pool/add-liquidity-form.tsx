@@ -8,6 +8,7 @@ import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { TokenSelector } from "@/components/features/swap/token-selector";
 import { ConnectModal } from "@/components/shared/connect-modal";
+import { XpHint } from "@/components/shared/xp-hint";
 import { WIRL_ABI } from "@/lib/abis/WIRL";
 import { formatTokenAmount } from "@/lib/utils";
 import { smartParseAmount } from "@/lib/token-utils";
@@ -226,6 +227,7 @@ export function AddLiquidityForm() {
               >
                 {isPending ? "Supplying..." : "Supply Liquidity"}
               </button>
+              <XpHint />
             </>
           )}
         </div>
