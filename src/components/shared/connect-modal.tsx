@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useWeb3, type ConnectMethod } from "@/providers/web3-provider";
+import { useWeb3 } from "@/providers/web3-provider";
 
 interface ConnectModalProps {
   isOpen: boolean;
@@ -10,14 +10,12 @@ interface ConnectModalProps {
 }
 
 const WALLET_OPTIONS: {
-  method: ConnectMethod;
   label: string;
   description: string;
   icon: React.ReactNode;
   tag?: string;
 }[] = [
   {
-    method: "metamask",
     label: "Browser Wallet",
     description: "MetaMask, Rabby, Coinbase, or any injected wallet",
     icon: (
@@ -25,18 +23,6 @@ const WALLET_OPTIONS: {
         <rect width="28" height="28" rx="6" fill="#F6851B" fillOpacity="0.15" />
         <path d="M20.5 8L15 12l1-3.5L20.5 8z" fill="#E2761B" stroke="#E2761B" strokeWidth="0.25" />
         <path d="M7.5 8l5.4 4.05L12 8.5 7.5 8zM19 18.5l-1.5 3.5 3.2-.9.9-3.1-2.6.5zM6.4 18l.9 3.1 3.2.9L9 18.5 6.4 18z" fill="#E4761B" stroke="#E4761B" strokeWidth="0.25" />
-      </svg>
-    ),
-  },
-  {
-    method: "web3auth",
-    label: "Social Login",
-    description: "Google, X, Email, Discord — no wallet needed",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <rect width="28" height="28" rx="6" fill="#6366F1" fillOpacity="0.15" />
-        <circle cx="14" cy="11" r="3" stroke="#818CF8" strokeWidth="1.5" />
-        <path d="M8 20c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -50,8 +36,8 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
     if (isConnected) onClose();
   }, [isConnected, onClose]);
 
-  const handleConnect = async (method: ConnectMethod) => {
-    await connect(method);
+  const handleConnect = async () => {
+    await connect();
   };
 
   return (
@@ -89,8 +75,8 @@ function ConnectModalContent({ onClose }: { onClose: () => void }) {
             const isDisabled = isConnecting || !!option.tag;
             return (
               <button
-                key={option.method}
-                onClick={() => !isDisabled && handleConnect(option.method)}
+                key={option.label}
+                onClick={() => !isDisabled && handleConnect()}
                 disabled={isDisabled}
                 className="w-full flex items-center gap-4 p-4 rounded-xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
                 style={{

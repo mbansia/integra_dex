@@ -173,7 +173,7 @@ const FAQS: FAQ[] = [
   { q: "What is a liquidity pool?", a: "A pool holds two tokens and lets traders swap between them. When you add liquidity, you deposit both tokens and earn 0.25% of every swap fee in return." },
   { q: "What's the swap fee?", a: "0.3% per trade — 0.25% goes to liquidity providers and 0.05% is an optional protocol fee." },
   { q: "How does the whitelist check work?", a: "For ERC-1404 tokens, PlotSwap calls detectTransferRestriction() before sending the transaction to your wallet. If you're not on the token's whitelist, you'll see the exact restriction reason in the UI." },
-  { q: "What wallets are supported?", a: "Any browser wallet like MetaMask, Rabby, or Coinbase Wallet. Social login via Web3Auth (Google, Email, etc.) is coming soon." },
+  { q: "What wallets are supported?", a: "Any browser wallet — MetaMask, Rabby, Coinbase Wallet, or any injected EVM wallet." },
   { q: "Is this real money?", a: "Currently running on testnet — all tokens are test tokens with no real value. It's a sandbox for trying out DeFi." },
   { q: "What is XP?", a: "Every swap and liquidity action emits an XP event on-chain. XP tracks your activity for rewards, reputation, and potential airdrops." },
 ];
