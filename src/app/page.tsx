@@ -183,7 +183,7 @@ export default function HomePage() {
         {/* Tagline */}
         <div className="mt-20 flex items-center gap-3 text-xs text-plotswap-text-subtle animate-fade-up-delay-3">
           <div className="h-px w-12 bg-gradient-to-r from-transparent to-plotswap-border" />
-          <span>PlotSwap.markets</span>
+          <span>PlotSwap.tech</span>
           <div className="h-px w-12 bg-gradient-to-l from-transparent to-plotswap-border" />
         </div>
       </div>
