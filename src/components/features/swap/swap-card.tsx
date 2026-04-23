@@ -343,6 +343,7 @@ export function SwapCard() {
           else setTokenOut(token);
         }}
         excludeAddress={selectorFor === "in" ? tokenOut?.address : tokenIn?.address}
+        context="swap"
       />
 
       {xpAwarded !== null && (
