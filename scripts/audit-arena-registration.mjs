@@ -154,20 +154,35 @@ for (const a of reg.agentActions.filter(x => x.prereqs)) {
 pass("prereq references type-check against their function signatures");
 
 // ─────────────────────────────────────────────────────────────────
-// 7. Dead references in free-text descriptions
+// 7. Description references must point to functions that EXIST as
+//    agentActions or are first-class macro names — i.e. the agent
+//    can actually call them. Walks every `description` and `inputs[].description`
+//    looking for "router.<X>" / "factory.<X>" / "wirl.<X>" mentions
+//    and checks each against the agentActions registry.
 // ─────────────────────────────────────────────────────────────────
-const removed = ["bestRoute", "isWhitelistedForPair", "getAllPoolsInfo", "getPoolTokens", "getPoolReserves", "quoteWithSlippage"];
-const allText = JSON.stringify({
-  description: reg.description,
-  agentActions: reg.agentActions, // includes macro descriptions and inputs
-});
-for (const dead of removed) {
-  // count occurrences in agentActions/descriptions but EXCLUDE the ABI block
-  const re = new RegExp(`\\b${dead}\\b`, "g");
-  const matches = allText.match(re) ?? [];
-  if (matches.length > 0) fail(`dead reference to "${dead}" still appears ${matches.length}× in descriptions/macros`);
+const callable = new Set();
+for (const a of reg.agentActions) {
+  if (a.type === "macro") callable.add(a.functionName); // bare macro name
+  else callable.add(`${a.contract}.${a.functionName}`);
 }
-pass("no dead references in agent-facing text");
+const refRe = /\b(router|factory|wirl)\.([a-zA-Z_][a-zA-Z0-9_]*)/g;
+const seen = new Set();
+function scanText(text, where) {
+  if (typeof text !== "string") return;
+  for (const m of text.matchAll(refRe)) {
+    const ref = `${m[1]}.${m[2]}`;
+    if (seen.has(`${where}|${ref}`)) continue;
+    seen.add(`${where}|${ref}`);
+    if (!callable.has(ref)) fail(`reference to non-callable "${ref}" in ${where}`);
+  }
+}
+scanText(reg.description, "top-level description");
+for (const a of reg.agentActions) {
+  const where = a.type === "macro" ? `macro:${a.functionName}` : `${a.contract}.${a.functionName}`;
+  scanText(a.description, `${where}.description`);
+  for (const inp of a.inputs ?? []) scanText(inp.description, `${where}.inputs[${inp.name}]`);
+}
+pass("every router.*/factory.*/wirl.* mention in descriptions resolves to a registered agentAction");
 
 // ─────────────────────────────────────────────────────────────────
 // 8. ABI completeness for prereqs (token contracts must expose approve)
