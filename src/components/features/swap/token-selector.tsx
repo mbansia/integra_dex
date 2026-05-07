@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { useWeb3 } from "@/providers/web3-provider";
 import { useTokenList } from "@/hooks/useTokenList";
 import { useWalletTokens } from "@/hooks/useWalletTokens";
+import { useOwnedIrwas } from "@/hooks/useOwnedIrwas";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useAllPools } from "@/hooks/useAllPools";
 import { TokenLogo } from "@/components/shared/token-logo";
@@ -101,12 +102,22 @@ export function TokenSelector({
   const [isLoadingCustom, setIsLoadingCustom] = useState(false);
   const { tokens: defaultTokens, isLoading } = useTokenList();
   const { tokens: walletTokens } = useWalletTokens();
+  const { tokens: ownedIrwas } = useOwnedIrwas();
   const { hasPoolFor, isSwapRoutable, isLoading: poolsLoading } = useAllPools();
+
+  // Owned iRWAs (passports created by this wallet, per ws.integralayer.com)
+  // are treated as a first-class section at the top of the list. We also
+  // merge them into the master `tokens` array so an owned iRWA without a
+  // PlotSwap pair still surfaces.
+  const ownedIrwaSet = useMemo(
+    () => new Set(ownedIrwas.map((t) => t.address.toLowerCase())),
+    [ownedIrwas]
+  );
 
   const tokens = useMemo<TokenInfo[]>(() => {
     const seen = new Set<string>();
     const out: TokenInfo[] = [];
-    for (const t of [...defaultTokens, ...walletTokens]) {
+    for (const t of [...ownedIrwas, ...defaultTokens, ...walletTokens]) {
       const key = t.address.toLowerCase();
       if (!seen.has(key)) {
         seen.add(key);
@@ -114,7 +125,7 @@ export function TokenSelector({
       }
     }
     return out;
-  }, [defaultTokens, walletTokens]);
+  }, [ownedIrwas, defaultTokens, walletTokens]);
   const { publicClient } = useWeb3();
 
   const [balances, setBalances] = useState<Record<string, bigint>>({});
@@ -261,19 +272,47 @@ export function TokenSelector({
               <p className="text-sm text-plotswap-text-muted">Discovering tokens...</p>
             </div>
           ) : sortedFiltered.length > 0 ? (
-            sortedFiltered.map((token) => {
-              const status = poolStatus.get(token.address.toLowerCase());
-              return (
-                <TokenRow
-                  key={token.address}
-                  token={token}
-                  onSelect={() => { onSelect(token); onClose(); setSearch(""); }}
-                  onBalance={reportBalance}
-                  disabled={status?.disabled}
-                  disabledReason={status?.reason}
-                />
-              );
-            })
+            <>
+              {(() => {
+                const ownedRows = sortedFiltered.filter((t) =>
+                  ownedIrwaSet.has(t.address.toLowerCase())
+                );
+                const otherRows = sortedFiltered.filter(
+                  (t) => !ownedIrwaSet.has(t.address.toLowerCase())
+                );
+                const renderRow = (token: TokenInfo) => {
+                  const status = poolStatus.get(token.address.toLowerCase());
+                  return (
+                    <TokenRow
+                      key={token.address}
+                      token={token}
+                      onSelect={() => { onSelect(token); onClose(); setSearch(""); }}
+                      onBalance={reportBalance}
+                      disabled={status?.disabled}
+                      disabledReason={status?.reason}
+                    />
+                  );
+                };
+                return (
+                  <>
+                    {ownedRows.length > 0 && (
+                      <>
+                        <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-plotswap-text-muted">
+                          Your iRWAs
+                        </div>
+                        {ownedRows.map(renderRow)}
+                        {otherRows.length > 0 && (
+                          <div className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-plotswap-text-muted">
+                            All tokens
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {otherRows.map(renderRow)}
+                  </>
+                );
+              })()}
+            </>
           ) : !showCustom && !isLoadingCustom ? (
             <div className="text-center py-8">
               <p className="text-plotswap-text-muted text-sm mb-2">

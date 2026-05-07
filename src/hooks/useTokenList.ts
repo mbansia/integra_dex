@@ -5,7 +5,6 @@ import { useWeb3 } from "@/providers/web3-provider";
 import { FACTORY_ABI } from "@/lib/abis/PlotswapFactory";
 import { PAIR_ABI } from "@/lib/abis/PlotswapPair";
 import { ERC20_ABI } from "@/lib/abis/ERC20";
-import { IRWA_WRAPPER_ABI } from "@/lib/abis/IRWAWrapper";
 import { YIELD_SPLITTER_ABI } from "@/lib/abis/YieldSplitter";
 import { CONTRACTS } from "@/lib/contracts";
 import { DEFAULT_TOKEN_LIST, type TokenInfo } from "@/lib/token-list";
@@ -162,21 +161,10 @@ export function useTokenList() {
           }
         }
 
-        // Also pull iRWA tokens and their PT/YT pair addresses from the new contracts
-        try {
-          const irwaTokens = (await publicClient.readContract({
-            address: CONTRACTS.IRWAWrapper,
-            abi: IRWA_WRAPPER_ABI,
-            functionName: "getAllTokens",
-          })) as `0x${string}`[];
-          for (const addr of irwaTokens) {
-            const key = addr.toLowerCase();
-            if (!seenAddresses.has(key)) {
-              seenAddresses.add(key);
-              tokenAddresses.push(addr);
-            }
-          }
-        } catch {}
+        // Note: IRWAWrapper.getAllTokens() was removed — it OOG-reverts on the
+        // 22K+ entry registry. iRWA tokens with a PlotSwap pair are picked up
+        // by the pair iteration above; per-wallet iRWA discovery uses the
+        // ws.integralayer.com Passport API via useOwnedIrwas().
 
         try {
           const splitAssets = (await publicClient.readContract({
